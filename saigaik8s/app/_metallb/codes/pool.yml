@@ -1,0 +1,10 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: bcastech-pool
+  namespace: metallb
+spec:
+  addresses:
+    - 192.168.166.0/24
+    # - 192.168.166.171-192.168.166.171
+  autoAssign: false

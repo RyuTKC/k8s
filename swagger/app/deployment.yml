@@ -1,0 +1,125 @@
+# swagger-editorのpod
+apiVersion: apps/v1
+kind: Deployment
+# デプロイメントのメタデータ
+metadata:
+  namespace: swagger-apps
+  # デプロイメントの名前
+  name: swagger-editor-deployment
+# このデプロイメントの仕様
+spec:
+  # 複製数
+  replicas: 2
+  selector:
+    # ラベルはtemplateのラベルと一致させる（多分なんのテンプレートをスケールするかを選ぶため）
+    matchLabels:
+      app: swagger-editor
+  # podのテンプレ情報
+  template:
+    # テンプレのメタデータ
+    metadata:
+      namespace: swagger-apps
+      # ラベル（名前みたいなもん）
+      labels:
+        app: swagger-editor
+    # podの仕様
+    spec:
+      # podが持つコンテナ
+      containers:
+        # エディター
+        - name: swagger-editor
+          image: swaggerapi/swagger-editor
+          ## このコンテナがクラスタ内に公開するポート
+          ports:
+            - containerPort: 8080
+---
+# swagger-uiのpod
+apiVersion: apps/v1
+kind: Deployment
+# デプロイメントのメタデータ
+metadata:
+  namespace: swagger-apps
+  # デプロイメントの名前
+  name: swagger-ui-deployment
+# このデプロイメントの仕様
+spec:
+  # 複製数
+  replicas: 2
+  selector:
+    # ラベルはtemplateのラベルと一致させる（多分なんのテンプレートをスケールするかを選ぶため）
+    matchLabels:
+      app: swagger-ui
+  # podのテンプレ情報
+  template:
+    # テンプレのメタデータ
+    metadata:
+      namespace: swagger-apps
+      # ラベル（名前みたいなもん）
+      labels:
+        app: swagger-ui
+    # podの仕様
+    spec:
+      # podが持つコンテナ
+      containers:
+        # UI
+        - name: swagger-ui
+          image: swaggerapi/swagger-ui
+          ports:
+            ## このコンテナがクラスタ内（podから？）に公開するポート
+            - containerPort: 8080
+          env:
+            - name: SWAGGER_JSON
+              value: /mnt/api/testapi.yml
+          volumeMounts:
+            - name: api-source
+              mountPath: "/mnt/api"
+              readOnly: false
+      volumes:
+        - name: api-source
+          persistentVolumeClaim:
+            claimName: swagger-pvc
+---
+# mockのpod
+apiVersion: apps/v1
+kind: Deployment
+# デプロイメントのメタデータ
+metadata:
+  namespace: swagger-apps
+  # デプロイメントの名前
+  name: spotlight-prism-deployment
+# このデプロイメントの仕様
+spec:
+  # 複製数
+  replicas: 2
+  selector:
+    # ラベルはtemplateのラベルと一致させる（多分なんのテンプレートをスケールするかを選ぶため）
+    matchLabels:
+      app: spotlight-prism
+  # podのテンプレ情報
+  template:
+    # テンプレのメタデータ
+    metadata:
+      namespace: swagger-apps
+      # ラベル（名前みたいなもん）
+      labels:
+        app: spotlight-prism
+    # podの仕様
+    spec:
+      # podが持つコンテナ
+      containers:
+        # MOCKサーバ
+        - name: spotlight-prism
+          image: stoplight/prism:3
+          ports:
+            ## このコンテナがクラスタ内に公開するポート
+            - containerPort: 4010
+          args:
+            [mock, -h, 0.0.0.0, /mnt/api/testapi.yml]
+          volumeMounts:
+            - name: api-source
+              mountPath: "/mnt/api"
+              readOnly: false
+      volumes:
+        - name: api-source
+          persistentVolumeClaim:
+            claimName: swagger-pvc

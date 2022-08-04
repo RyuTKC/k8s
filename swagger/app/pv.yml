@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: PersistentVolume
+# ボリュームのメタ
+metadata:
+  name: swagger-pv
+# ボリュームの仕様
+spec:
+  storageClassName: smb-ryu-storage
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: false
+    volumeHandle: swagger-datas  # make sure it's a unique id in the cluster
+    volumeAttributes:
+      source: "//192.168.166.11/kubernetesVolumes"
+      subDir: "swagger"
+    nodeStageSecretRef:
+      namespace: default
+      name: "smb-ryu-cred"

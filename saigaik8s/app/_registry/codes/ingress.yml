@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registry-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 100M
+spec:
+  ingressClassName: "nginx"
+  tls:
+    - hosts:
+        - registry.saigai-ansible.com
+      secretName: registry-secret-tls
+  rules:
+    - host: registry.saigai-ansible.com
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: registry-service
+                port:
+                  number: 5000

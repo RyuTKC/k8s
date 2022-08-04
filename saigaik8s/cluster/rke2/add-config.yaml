@@ -1,0 +1,12 @@
+server: https://192.168.166.161:9345
+token: K1086358e03158f80aa45ee0ebe8ffebc151655c5cd5985c375e82751e994a0580f::server:88c11e85e5b4ab362fded343a265d2d3
+node-ip: 192.168.166.165
+node-label: 
+  - worker
+kubelet-arg:
+  - runtime-request-timeout=10m0s
+  - image-pull-progress-deadline=10m
+disable:
+  - rke2-ingress-nginx
+tls-san:
+  - 192.168.166.161

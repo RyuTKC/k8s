@@ -1,0 +1,36 @@
+# podの公開方法（外部通信サービス定義）
+apiVersion: v1
+kind: Service
+# サービスのメタデータ
+metadata:
+  namespace: z-postgres-operator
+  name: pgadmin-svc
+# このサービスの仕様
+spec:
+  # clusterIPを手動で指定する場合はこれらのいずれかを指定（自動で指定されるはず）
+  ## clusterIP: 
+  ## clusterIPs:
+
+  # サービスのタイプ
+  ## ClusterIP: エンドポイント（ここでいうところのselector内の記述, つまりPod）にclusterIPを割り振る
+  ##            Cluster内部でのみアクセス可能ということ
+  ## NodePort: 各ノードでポートを公開する。
+  ##           Ingressでも公開可能だが、この場合はIngressそのものの使い道は大してなさそう
+  ##          （kubernetes外のロードバランサを使いたいときとか？）
+  type: ClusterIP
+  # ※重要※ 公開したいpod（deployment）のkey, valueを記述する
+  selector:
+    # 公開したいpod（deployment）と名前を一致させる
+    app: pgadmin
+  # サービス上で公開するポート
+  ports:
+    - name: https
+      protocol: TCP
+      # 公開するポート
+      port: 9091
+      # 対象となるpodのポート
+      targetPort: 443
+    - name: http
+      protocol: TCP
+      port: 9092
+      targetPort: 80

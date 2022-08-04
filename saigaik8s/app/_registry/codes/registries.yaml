@@ -1,0 +1,11 @@
+mirrors:
+  registry.saigai-ansible.com:
+    endpoint:
+      - "https://registry.saigai-ansible.com"
+configs:
+  registry.saigai-ansible.com:
+    auth:
+      username: reguser
+      password: reg-123
+    tls:
+      insecure_skip_verify: true

@@ -1,0 +1,22 @@
+# Dynamic Provisioning（nfs driver）
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+# メタデータ
+metadata:
+  name: sc-smb-nas-dp
+provisioner: smb.csi.k8s.io
+parameters:
+  source: //192.168.166.222/s90_SoftLib/Saigaik8s/DP
+  # subDir: 
+  csi.storage.k8s.io/provisioner-secret-namespace: "default"
+  csi.storage.k8s.io/provisioner-secret-name: "secret-nas-ryu"
+  csi.storage.k8s.io/node-stage-secret-namespace: "default"
+  csi.storage.k8s.io/node-stage-secret-name: "secret-nas-ryu"
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=999
+  - gid=999
+  - vers=2.0

@@ -1,0 +1,21 @@
+tcp:
+  8080: "gitlab-helm/gitlab-helm-webservice-default:8181"
+  8081: "gitlab-helm/gitlab-helm-registry:5000"
+  8082: "gitlab-helm/gitlab-helm-kas:8154"
+  8083: "gitlab-helm/gitlab-helm-prometheus-server:80"
+  9000: "awx/awx-service:80"
+  9090: "z-postgres-operator/postgres-operator-ui:80"
+  9091: "z-postgres-operator/pgadmin-svc:9091"
+  9092: "z-postgres-operator/pgadmin-svc:9092"
+  10000: "rook-ceph/rook-ceph-mgr-dashboard:8443"
+udp:
+controller:
+  service:
+    loadBalancerIP: 192.168.166.171
+    # externalIPs:
+    #   - 192.168.166.235
+
+# defaultBackend:
+#   service:
+#     externalIPs:
+#       - 192.168.166.235

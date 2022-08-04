@@ -1,0 +1,13 @@
+network:
+  version: 2
+  ethernets:
+    enp1s0:
+       addresses: [192.168.122.10/24]
+       gateway4: 192.168.122.1
+       nameservers:
+         addresses: [192.168.32.6, 192.168.32.8]
+         search: []
+       optional: true
+    enp6s0:
+       addresses: [192.168.125.10/24]
+       optional: true

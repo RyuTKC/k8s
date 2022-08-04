@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.1 (a9d05d509)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: web-back
+  name: web-back
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: web-back
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.1 (a9d05d509)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/ap-area: "true"
+        io.kompose.service: web-back
+    spec:
+      containers:
+        - image: web-back
+          name: mmw-back-redirector
+          ports:
+            - containerPort: 3000
+          resources: {}
+          volumeMounts:
+            - mountPath: /MMW-api/tmp
+              name: rails-tmp
+      hostname: mmw-back-redirector
+      restartPolicy: Always
+      volumes:
+        - name: rails-tmp
+          persistentVolumeClaim:
+            claimName: rails-tmp
+status: {}

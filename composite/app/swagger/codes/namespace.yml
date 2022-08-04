@@ -1,0 +1,7 @@
+# swagger-editorのpod
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: swagger-apps
+  labels:
+    name: swagger-apps

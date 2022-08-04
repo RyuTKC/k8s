@@ -1,0 +1,101 @@
+global:
+  edition: ce
+  hosts:
+    domain: gitlab-helm.com 
+    externalIP: 192.168.125.201 
+    # https: false
+    # gitlab:
+    #   https: false
+    # registry:
+    #   https: false
+    # minio:
+    #   https: false
+  rails:
+    bootsnap:
+      enabled: false
+  ingress:
+    configureCertmanager: false
+  psql:
+    host: gitlab-postgres.z-postgres.svc.cluster.local
+    username: gitlab_root
+    sslMode: disable
+    database: gitlab_db
+    password:
+      useSecret: true
+      secret: gitlab-root.gitlab-postgres.credentials.postgresql.acid.zalan.do
+      key: password
+postgresql:
+  install: false
+  # volumePermissions:
+  #   enabled: true
+  # image.tag: 13.6.0
+certmanager:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+certmanager-issuer:
+  email: ryu.ide@fujimic.com
+gitlab-runner:
+  install: false
+nginx-ingress:
+  controller:
+    replicaCount: 1
+    minAvailable: 0
+    resources:
+      requests:
+        cpu: 50m
+        memory: 100Mi
+  defaultBackend:
+    replicaCount: 1
+    minAvailable: 0
+    resources:
+      requests:
+        cpu: 5m
+        memory: 5Mi
+redis:
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 64Mi
+minio:
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 0.1
+gitlab:
+  unicorn:
+    minReplicas: 1
+    maxReplicas: 1
+  sidekiq:
+    minReplicas: 1
+    maxReplicas: 1
+    resources:
+      limits:
+        memory: 1.5G
+      requests:
+        cpu: 0.1
+        memory: 625M
+  gitlab-shell:
+    minReplicas: 1
+    maxReplicas: 1
+  webservice:
+    minReplicas: 1
+    maxReplicas: 1
+    resources:
+      limits:
+        memory: 1.5G
+      requests:
+        cpu: 0.1
+        memory: 10M
+    workhorse:
+      resources:
+        limits:
+          memory: 100M
+        requests:
+          cpu: 0.1
+          memory: 10M
+registry:
+  hpa:
+    minReplicas: 1
+    maxReplicas: 1

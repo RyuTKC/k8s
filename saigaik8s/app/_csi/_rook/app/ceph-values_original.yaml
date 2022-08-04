@@ -1,0 +1,110 @@
+operatorNamespace: rook-ceph
+
+# kubeVersion:
+
+# configOverride:
+
+toolbox:
+  enabled: true
+  # tolerations:
+  # affinity:
+  # resoures:
+
+monitoring:
+  enabled: false
+  createPrometheusRules: false
+
+# 重要！
+cephClusterSpec:
+  cephVersion:
+    # see the "Cluster Settings" section below for more details on which image of ceph to run
+    image: quay.io/ceph/ceph:v17.2.1
+  dataDirHostPath: /var/lib/rook
+  dashboard:
+    enabled: true
+    # port: 8443
+    # ssl: true
+  mon:
+    count: 2
+    allowMultiplePerNode: false
+
+  resources:
+    mgr:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+    mon:
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+    osd:
+      limits:
+        cpu: "1000m"
+        memory: "4Gi"
+      requests:
+        cpu: "500m"
+        memory: "4Gi"
+    prepareosd:
+      limits:
+        cpu: "250m"
+        memory: "400Mi"
+      requests:
+        cpu: "250m"
+        memory: "50Mi"
+    mgr-sidecar:
+      limits:
+        cpu: "250m"
+        memory: "100Mi"
+      requests:
+        cpu: "100m"
+        memory: "40Mi"
+    crashcollector:
+      limits:
+        cpu: "250m"
+        memory: "60Mi"
+      requests:
+        cpu: "100m"
+        memory: "60Mi"
+    logcollector:
+      limits:
+        cpu: "250m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "100Mi"
+    cleanup:
+      limits:
+        cpu: "250m"
+        memory: "1Gi"
+      requests:
+        cpu: "250m"
+        memory: "100Mi"
+  storage:
+    useAllNodes: false
+    useAllDevices: false
+    deviceFilter:
+    config:
+      # metadataDevice:
+      # databaseSizeMB: "1024" # this value can be removed for environments with normal sized disks (100 GB or larger)
+    nodes:
+      - name: "k8s-w02"
+        devices:
+          - name: "sdb"
+            config:
+      - name: "k8s-w03"
+        devices:
+          - name: "sdb"
+            config:
+
+ingress:
+  dashboard: {}
+
+# cephBlockPools:
+# cephFileSystems:
+# cephObjectStores:

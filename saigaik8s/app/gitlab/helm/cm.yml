@@ -1,0 +1,63 @@
+version: 0.1
+log:
+  fields:
+    service: registry
+  level: info
+http:
+  addr: :5000
+  # `host` is not configurable
+  # `prefix` is not configurable
+  debug:
+    addr: ':5001'
+    prometheus:
+      enabled: false
+      path: /metrics
+  draintimeout: 0
+  headers:
+    X-Content-Type-Options: [nosniff]
+  secret: "HTTP_SECRET"
+  relativeurls: false
+health:
+  storagedriver:
+    enabled: false
+    interval: 10s
+    threshold: 3
+auth:
+  token:
+    realm: http://bcastech-gitlab.is.fujimic.com/jwt/auth
+    service: container_registry
+    issuer: "gitlab-issuer"
+    # This is provided from the initContainer execution, at a known path.
+    rootcertbundle: /etc/docker/registry/certificate.crt
+    autoredirect: false
+compatibility:
+  schema1:
+    enabled: false
+validation:
+  disabled: true
+  manifests:
+    referencelimit: 0
+    payloadsizelimit: 0
+    urls:
+      allow:
+      deny:
+
+notifications:
+reporting:
+profiling:
+storage:
+  maintenance:
+    readonly:
+      enabled: false
+    uploadpurging:
+      enabled: true
+      age: 168h
+      interval: 24h
+      dryrun: false
+middleware:
+
+gc:
+  disabled: true
+migration:
+  enabled: false
+  testslowimport: 0s

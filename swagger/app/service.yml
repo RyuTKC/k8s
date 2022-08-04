@@ -1,0 +1,101 @@
+# podの公開方法（外部通信サービス定義）
+apiVersion: v1
+kind: Service
+# サービスのメタデータ
+metadata:
+  namespace: swagger-apps
+  name: swagger-editor-service
+# このサービスの仕様
+spec:
+  # clusterIPを手動で指定する場合はこれらのいずれかを指定（自動で指定されるはず）
+  ## clusterIP: 
+  ## clusterIPs:
+
+  # サービスのタイプ
+  ## ClusterIP: エンドポイント（ここでいうところのselector内の記述, つまりPod）にclusterIPを割り振る
+  ##            Cluster内部でのみアクセス可能ということ
+  ## NodePort: 各ノードでポートを公開する。
+  ##           Ingressでも公開可能だが、この場合はIngressそのものの使い道は大してなさそう
+  ##          （kubernetes外のロードバランサを使いたいときとか？）
+  type: ClusterIP
+  # ※重要※ 公開したいpod（deployment）のkey, valueを記述する
+  selector:
+    # 公開したいpod（deployment）と名前を一致させる
+    app: swagger-editor
+  # サービス上で公開するポート
+  ports:
+    # editorコンテナと通信するポート
+    - name: swagger-editor-serviceport
+      protocol: TCP
+      # 公開するポート
+      port: 8001
+      # 対象となるpodのポート
+      targetPort: 8080
+---
+# podの公開方法（外部通信サービス定義）
+apiVersion: v1
+kind: Service
+# サービスのメタデータ
+metadata:
+  namespace: swagger-apps
+  name: swagger-ui-service
+# このサービスの仕様
+spec:
+  # clusterIPを手動で指定する場合はこれらのいずれかを指定（自動で指定されるはず）
+  ## clusterIP: 
+  ## clusterIPs:
+
+  # サービスのタイプ
+  ## ClusterIP: エンドポイント（ここでいうところのselector内の記述, つまりPod）にclusterIPを割り振る
+  ##            Cluster内部でのみアクセス可能ということ
+  ## NodePort: 各ノードでポートを公開する。
+  ##           Ingressでも公開可能だが、この場合はIngressそのものの使い道は大してなさそう
+  ##          （kubernetes外のロードバランサを使いたいときとか？）
+  type: ClusterIP
+  # ※重要※ 公開したいpod（deployment）のkey, valueを記述する
+  selector:
+    # 公開したいpod（deployment）と名前を一致させる
+    app: swagger-ui
+  # サービス上で公開するポート
+  ports:
+    # uiコンテナと通信するポート
+    - name: swagger-ui-serviceport
+      protocol: TCP
+      # 公開するポート
+      port: 8002
+      # 対象となるpodのポート
+      targetPort: 8080
+---
+# podの公開方法（外部通信サービス定義）
+apiVersion: v1
+kind: Service
+# サービスのメタデータ
+metadata:
+  namespace: swagger-apps
+  name: spotlight-prism-service
+# このサービスの仕様
+spec:
+  # clusterIPを手動で指定する場合はこれらのいずれかを指定（自動で指定されるはず）
+  ## clusterIP: 
+  ## clusterIPs:
+
+  # サービスのタイプ
+  ## ClusterIP: エンドポイント（ここでいうところのselector内の記述, つまりPod）にclusterIPを割り振る
+  ##            Cluster内部でのみアクセス可能ということ
+  ## NodePort: 各ノードでポートを公開する。
+  ##           Ingressでも公開可能だが、この場合はIngressそのものの使い道は大してなさそう
+  ##          （kubernetes外のロードバランサを使いたいときとか？）
+  type: ClusterIP
+  # ※重要※ 公開したいpod（deployment）のkey, valueを記述する
+  selector:
+    # 公開したいpod（deployment）と名前を一致させる
+    app: spotlight-prism
+  # サービス上で公開するポート
+  ports:
+    # prismコンテナと通信するポート
+    - name: spotlight-prism-serviceport
+      protocol: TCP
+      # 公開するポート
+      port: 8003
+      # 対象となるpodのポート
+      targetPort: 4010

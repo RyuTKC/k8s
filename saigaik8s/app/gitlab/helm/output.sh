@@ -1,0 +1,1 @@
+helm get values gitlab-helm -n gitlab-helm > output-gitlab.yaml

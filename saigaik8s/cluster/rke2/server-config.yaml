@@ -1,0 +1,7 @@
+write-kubeconfig-mode: 777
+node-ip: 192.168.166.161
+kubelet-arg:
+  - runtime-request-timeout=10m0s
+  - image-pull-progress-deadline=10m
+disable:
+  - rke2-ingress-nginx

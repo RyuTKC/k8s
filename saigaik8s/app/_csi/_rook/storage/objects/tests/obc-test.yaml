@@ -1,0 +1,12 @@
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  namespace: rook-ceph
+  name: test-bucket
+spec:
+  # bucketName: gitlab-registry-bucket
+  generateBucketName: test-bucket
+  storageClassName: buckets-test
+  additionalConfig:
+    maxObjects: "100"
+    maxSize: "1G"

@@ -1,0 +1,44 @@
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: "gitlab-postgres"
+  namespace: "z-postgres"
+  labels:
+    team: gitlab
+spec:
+  teamId: gitlab
+  volume:
+    size: 10Gi
+    storageClass: ceph-block
+  numberOfInstances: 2
+  spiloRunAsUser: 101
+  spiloRunAsGroup: 103
+  spiloFSGroup: 103
+  users:
+    gitlab_root:
+      - superuser
+      - createdb
+
+    # role for application foo
+    gitlab_user: 
+      - login # or 'foo_user: []'
+
+  #databases: name->owner
+  databases:
+    gitlab_db: gitlab_root
+  postgresql:
+    version: "12"
+  patroni:
+    pg_hba:
+      # - host all all 0.0.0.0/0 md5
+      # - hostnossl all all 0.0.0.0/0 md5
+      - local   all             all                                   trust
+      - hostssl all             +zalandos    127.0.0.1/32       pam
+      - host    all             all                127.0.0.1/32       md5
+      - hostssl all             +zalandos    ::1/128            pam
+      - host    all             all                ::1/128            md5
+      - local   replication     standby                    trust
+      - hostssl replication     standby all                md5
+      - hostnossl all           all                all                md5
+      - hostssl all             +zalandos    all                pam
+      - hostssl all             all                all                md5

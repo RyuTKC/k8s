@@ -1,0 +1,42 @@
+# swagger-editorのpod
+apiVersion: apps/v1
+kind: Deployment
+# デプロイメントのメタデータ
+metadata:
+  namespace: z-postgres-operator
+  # デプロイメントの名前
+  name: pgadmin
+# このデプロイメントの仕様
+spec:
+  # 複製数
+  replicas: 1
+  selector:
+    # ラベルはtemplateのラベルと一致させる（多分なんのテンプレートをスケールするかを選ぶため）
+    matchLabels:
+      app: pgadmin
+  # podのテンプレ情報
+  template:
+    # テンプレのメタデータ
+    metadata:
+      namespace: z-postgres-operator
+      # ラベル（名前みたいなもん）
+      labels:
+        app: pgadmin
+    # podの仕様
+    spec:
+      # podが持つコンテナ
+      containers:
+        # エディター
+        - name: pgadmin
+          image: dpage/pgadmin4:latest
+          ## このコンテナがクラスタ内に公開するポート
+          ports:
+            - name: https
+              containerPort: 443
+            - name: http
+              containerPort: 80
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              value: ryu.ide@fujimic.com
+            - name: PGADMIN_DEFAULT_PASSWORD
+              value: pg-123

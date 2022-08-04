@@ -1,0 +1,23 @@
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx
+spec:
+  admin_user: admin
+  admin_password_secret: secret-awx-admin
+
+  service_type: ClusterIP
+ 
+  ingress_type: ingress
+  # ingress_tls_secret: awx-secret-tls
+  # hostname: \*
+ 
+  postgres_configuration_secret: secret-awx-postgres
+ 
+  postgres_storage_class: sc-smb-nas-postgres
+  postgres_storage_requirements:
+    requests:
+      storage: 2Gi
+ 
+  projects_persistence: true
+  projects_existing_claim: pvc-awx-projects

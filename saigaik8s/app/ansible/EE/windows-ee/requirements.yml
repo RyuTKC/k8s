@@ -1,0 +1,11 @@
+---
+  collections:
+    - name: ansible.windows
+      version: '1.10'
+      source: https://galaxy.ansible.com
+      # source: https://github.com/ansible-collections/ansible.windows.git
+
+    - name: community.windows
+      version: '1.10.0'
+      source: https://galaxy.ansible.com
+      # source: https://github.com/ansible-collections/community.windows.git

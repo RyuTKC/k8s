@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: registry
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+secretGenerator:
+  - name: registry-secret-tls
+    type: kubernetes.io/tls
+    files:
+      - tls.crt
+      - tls.key
+
+resources:
+  - codes/namespace.yml
+  # - codes/pv.yml
+  - codes/pvc.yml
+  - codes/ingress.yml
+  - codes/service.yml
+  - codes/configmap.yml
+  - codes/deployment.yml

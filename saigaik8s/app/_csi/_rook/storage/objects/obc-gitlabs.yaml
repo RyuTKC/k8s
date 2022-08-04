@@ -1,0 +1,87 @@
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  namespace: rook-ceph
+  name: gitlab-registry-bucket
+spec:
+  # bucketName: gitlab-registry-bucket
+  generateBucketName: gitlab-registry-bucket
+  storageClassName: gitlab-buckets
+  additionalConfig:
+    maxObjects: "10000"
+    maxSize: "150G"
+
+---
+
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  namespace: rook-ceph
+  name: gitlab-lfs-bucket
+spec:
+  # bucketName: gitlab-lfs-bucket
+  generateBucketName: gitlab-lfs-bucket
+  storageClassName: gitlab-buckets
+  additionalConfig:
+    maxObjects: "1000"
+    maxSize: "5G"
+
+---
+
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  namespace: rook-ceph
+  name: gitlab-artifacts-bucket
+spec:
+  # bucketName: gitlab-artifacts-bucket
+  generateBucketName: gitlab-artifacts-bucket
+  storageClassName: gitlab-buckets
+  additionalConfig:
+    maxObjects: "1000"
+    maxSize: "5G"
+
+---
+
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  namespace: rook-ceph
+  name: gitlab-uploads-bucket
+spec:
+  # bucketName: gitlab-uploads-bucket
+  generateBucketName: gitlab-uploads-bucket
+  storageClassName: gitlab-buckets
+  additionalConfig:
+    maxObjects: "1000"
+    maxSize: "5G"
+
+---
+
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  namespace: rook-ceph
+  name: gitlab-packages-bucket
+spec:
+  # bucketName: gitlab-packages-bucket
+  generateBucketName: gitlab-packages-bucket
+  storageClassName: gitlab-buckets
+  additionalConfig:
+    maxObjects: "1000"
+    maxSize: "5G"
+
+---
+
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  namespace: rook-ceph
+  name: gitlab-backups-bucket
+spec:
+  # bucketName: gitlab-backups-bucket
+  generateBucketName: gitlab-backups-bucket
+  storageClassName: gitlab-buckets
+  additionalConfig:
+    maxObjects: "5000"
+    maxSize: "10G"

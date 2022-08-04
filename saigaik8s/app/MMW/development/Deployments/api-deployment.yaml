@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -f docker-compose.test.yml
+    kompose.version: 1.26.1 (a9d05d509)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: api
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml -f docker-compose.test.yml
+        kompose.version: 1.26.1 (a9d05d509)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/ap-area: "true"
+        io.kompose.network/db-area: "true"
+        io.kompose.service: api
+    spec:
+      containers:
+        - env:
+            - name: AP_HOST
+              value: 127.0.0.1
+            - name: AP_PORT
+              value: "8080"
+            - name: DATABASE
+              value: machine_manage_web
+            - name: DB_ENCODING
+              value: utf8
+            - name: DB_HOST
+              value: 172.20.0.10
+            - name: DB_PASSWORD
+              value: mmw-123
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USERNAME
+              value: mmw
+            - name: RAILS_ENV
+              value: production
+            - name: SECRET_KEY_BASE
+              value: 7610ebd9428c7e4fcf6a202a18c231187c8a6f7e29bc9afd9abb6f6197700a500fedc04877fb3311c21f0ff7f08d7406a136d45af74db383fe4ff82ecf57c235
+            - name: SMTP_DOMAIN
+              value: gmail.com
+            - name: SMTP_PASSWORD
+              value: tshsmsboxjuuvnsi
+            - name: SMTP_SERVER
+              value: smtp.gmail.com
+            - name: SMTP_SERVER_PORT
+              value: "587"
+            - name: SMTP_USERNAME
+              value: machine.manage.web@gmail.com
+          image: api
+          name: mmw-api
+          resources: {}
+          volumeMounts:
+            - mountPath: /MMW-api
+              name: mmw-api
+            - mountPath: /MMW-api/tmp
+              name: rails-tmp
+            - mountPath: /MMW-api/log
+              name: rails-log
+      hostname: mmw-api
+      restartPolicy: Always
+      volumes:
+        - name: mmw-api
+          persistentVolumeClaim:
+            claimName: mmw-api
+        - name: rails-tmp
+          persistentVolumeClaim:
+            claimName: rails-tmp
+        - name: rails-log
+          persistentVolumeClaim:
+            claimName: rails-log
+status: {}

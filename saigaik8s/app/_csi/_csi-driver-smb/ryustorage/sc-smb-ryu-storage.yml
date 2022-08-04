@@ -1,0 +1,20 @@
+# Dynamic Provisioning（nfs driver）
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+# メタデータ
+metadata:
+  name: sc-smb-ryu-storage
+provisioner: smb.csi.k8s.io
+parameters:
+  source: //192.168.166.11/kubernetesVolumes
+  csi.storage.k8s.io/provisioner-secret-namespace: "default"
+  csi.storage.k8s.io/provisioner-secret-name: "secret-smb-ryu"
+  csi.storage.k8s.io/node-stage-secret-namespace: "default"
+  csi.storage.k8s.io/node-stage-secret-name: "secret-smb-ryu"
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=0
+  - gid=0

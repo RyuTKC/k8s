@@ -1,0 +1,46 @@
+# L7LBサービス（公開するにあたってのLBとして考える）
+apiVersion: networking.k8s.io/v1 
+kind: Ingress
+# Ingressのメタデータ
+metadata:
+  name: z-postgres-operator-ingress
+  annotations:
+    # kubernetes.io/ingress.class: nginx
+    # 正規表現使う
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # 正規表現ブロックを引数で表示(この場合、path:の(.*)が$2に当たる)
+    nginx.ingress.kubernetes.io/rewrite-target: /$1$2
+# このIngressの仕様
+spec:
+  ingressClassName: "nginx"
+  # 規則
+  rules:
+    # ヘッダ（FQDNを指定する）
+    # - host: 
+    - http:
+        paths:
+            # 公開するurlパス
+          - path: /z-postgres-operator/(.*)
+            pathType: Prefix
+            backend:
+              # つなぎたいサービスの情報
+              service:
+                name: postgres-operator-ui
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              # つなぎたいサービスの情報
+              service:
+                name: postgres-operator-ui
+                port:
+                  number: 80     
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              # つなぎたいサービスの情報
+              service:
+                name: postgres-operator-ui
+                port:
+                  number: 80

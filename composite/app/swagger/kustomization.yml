@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: swagger-apps
+ 
+generatorOptions:
+  disableNameSuffixHash: true
+ 
+secretGenerator:
+ 
+resources:
+  - ./codes/namespace.yml
+  - ./codes/pv.yml
+  - ./codes/pvc.yml
+  - ./codes/deployment.yml
+  - ./codes/service.yml
+  - ./codes/ingress.yml

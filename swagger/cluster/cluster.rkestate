@@ -1,0 +1,737 @@
+{
+  "desiredState": {
+    "rkeConfig": {
+      "nodes": [
+        {
+          "address": "192.168.125.10",
+          "port": "22",
+          "internalAddress": "192.168.125.10",
+          "role": [
+            "controlplane",
+            "worker",
+            "etcd"
+          ],
+          "hostnameOverride": "swagger-node-01-m",
+          "user": "swagger",
+          "dockerSocket": "/var/run/docker.sock",
+          "sshKeyPath": "~/.ssh/id_ed25519_toSwagger"
+        },
+        {
+          "address": "192.168.125.11",
+          "port": "22",
+          "internalAddress": "192.168.125.11",
+          "role": [
+            "worker"
+          ],
+          "hostnameOverride": "swagger-node-02",
+          "user": "swagger",
+          "dockerSocket": "/var/run/docker.sock",
+          "sshKeyPath": "~/.ssh/id_ed25519_toSwagger"
+        }
+      ],
+      "services": {
+        "etcd": {
+          "image": "rancher/mirrored-coreos-etcd:v3.4.16-rancher1",
+          "extraArgs": {
+            "election-timeout": "5000",
+            "heartbeat-interval": "500"
+          },
+          "snapshot": true,
+          "retention": "72h",
+          "creation": "12h"
+        },
+        "kubeApi": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1",
+          "serviceClusterIpRange": "10.43.0.0/16",
+          "serviceNodePortRange": "30000-32767",
+          "auditLog": {
+            "enabled": true,
+            "configuration": {
+              "maxAge": 30,
+              "maxBackup": 10,
+              "maxSize": 100,
+              "path": "/var/log/kube-audit/audit-log.json",
+              "format": "json",
+              "policy": {
+                "kind": "Policy",
+                "apiVersion": "audit.k8s.io/v1",
+                "metadata": {
+                  "creationTimestamp": null
+                },
+                "rules": [
+                  {
+                    "level": "Metadata"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "kubeController": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1",
+          "clusterCidr": "10.42.0.0/16",
+          "serviceClusterIpRange": "10.43.0.0/16"
+        },
+        "scheduler": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1"
+        },
+        "kubelet": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1",
+          "clusterDomain": "cluster.local",
+          "infraContainerImage": "rancher/mirrored-pause:3.4.1",
+          "clusterDnsServer": "10.43.0.10"
+        },
+        "kubeproxy": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1"
+        }
+      },
+      "network": {
+        "plugin": "calico",
+        "options": {
+          "calico_cloud_provider": "none",
+          "calico_flex_volume_plugin_dir": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
+        },
+        "updateStrategy": {
+          "strategy": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": 1
+          }
+        }
+      },
+      "authentication": {
+        "strategy": "x509"
+      },
+      "systemImages": {
+        "etcd": "rancher/mirrored-coreos-etcd:v3.4.16-rancher1",
+        "alpine": "rancher/rke-tools:v0.1.78",
+        "nginxProxy": "rancher/rke-tools:v0.1.78",
+        "certDownloader": "rancher/rke-tools:v0.1.78",
+        "kubernetesServicesSidecar": "rancher/rke-tools:v0.1.78",
+        "kubedns": "rancher/mirrored-k8s-dns-kube-dns:1.17.4",
+        "dnsmasq": "rancher/mirrored-k8s-dns-dnsmasq-nanny:1.17.4",
+        "kubednsSidecar": "rancher/mirrored-k8s-dns-sidecar:1.17.4",
+        "kubednsAutoscaler": "rancher/mirrored-cluster-proportional-autoscaler:1.8.3",
+        "coredns": "rancher/mirrored-coredns-coredns:1.8.4",
+        "corednsAutoscaler": "rancher/mirrored-cluster-proportional-autoscaler:1.8.3",
+        "nodelocal": "rancher/mirrored-k8s-dns-node-cache:1.18.0",
+        "kubernetes": "rancher/hyperkube:v1.21.8-rancher1",
+        "flannel": "rancher/mirrored-coreos-flannel:v0.15.1",
+        "flannelCni": "rancher/flannel-cni:v0.3.0-rancher6",
+        "calicoNode": "rancher/mirrored-calico-node:v3.19.2",
+        "calicoCni": "rancher/mirrored-calico-cni:v3.19.2",
+        "calicoControllers": "rancher/mirrored-calico-kube-controllers:v3.19.2",
+        "calicoCtl": "rancher/mirrored-calico-ctl:v3.19.2",
+        "calicoFlexVol": "rancher/mirrored-calico-pod2daemon-flexvol:v3.19.2",
+        "canalNode": "rancher/mirrored-calico-node:v3.19.2",
+        "canalCni": "rancher/mirrored-calico-cni:v3.19.2",
+        "canalControllers": "rancher/mirrored-calico-kube-controllers:v3.19.2",
+        "canalFlannel": "rancher/mirrored-coreos-flannel:v0.15.1",
+        "canalFlexVol": "rancher/mirrored-calico-pod2daemon-flexvol:v3.19.2",
+        "weaveNode": "weaveworks/weave-kube:2.8.1",
+        "weaveCni": "weaveworks/weave-npc:2.8.1",
+        "podInfraContainer": "rancher/mirrored-pause:3.4.1",
+        "ingress": "rancher/nginx-ingress-controller:nginx-0.49.3-rancher1",
+        "ingressBackend": "rancher/mirrored-nginx-ingress-controller-defaultbackend:1.5-rancher1",
+        "ingressWebhook": "rancher/mirrored-ingress-nginx-kube-webhook-certgen:v1.1.1",
+        "metricsServer": "rancher/mirrored-metrics-server:v0.5.0",
+        "windowsPodInfraContainer": "rancher/kubelet-pause:v0.1.6",
+        "aciCniDeployContainer": "noiro/cnideploy:5.1.1.0.1ae238a",
+        "aciHostContainer": "noiro/aci-containers-host:5.1.1.0.1ae238a",
+        "aciOpflexContainer": "noiro/opflex:5.1.1.0.1ae238a",
+        "aciMcastContainer": "noiro/opflex:5.1.1.0.1ae238a",
+        "aciOvsContainer": "noiro/openvswitch:5.1.1.0.1ae238a",
+        "aciControllerContainer": "noiro/aci-containers-controller:5.1.1.0.1ae238a",
+        "aciGbpServerContainer": "noiro/gbp-server:5.1.1.0.1ae238a",
+        "aciOpflexServerContainer": "noiro/opflex-server:5.1.1.0.1ae238a"
+      },
+      "sshKeyPath": "~/.ssh/id_ed25519_toSwagger",
+      "sshAgentAuth": false,
+      "authorization": {
+        "mode": "rbac"
+      },
+      "ignoreDockerVersion": false,
+      "enableCriDockerd": null,
+      "kubernetesVersion": "v1.21.8-rancher1-1",
+      "ingress": {
+        "provider": "nginx",
+        "updateStrategy": {
+          "strategy": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": 1
+          }
+        },
+        "httpPort": 80,
+        "httpsPort": 443,
+        "networkMode": "hostPort",
+        "defaultBackend": true,
+        "defaultIngressClass": true
+      },
+      "clusterName": "swagger-cluster",
+      "cloudProvider": {},
+      "prefixPath": "/",
+      "addonJobTimeout": 45,
+      "bastionHost": {},
+      "monitoring": {
+        "provider": "metrics-server",
+        "updateStrategy": {
+          "strategy": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          }
+        },
+        "replicas": 1
+      },
+      "restore": {},
+      "rotateEncryptionKey": false,
+      "dns": {
+        "provider": "coredns",
+        "updateStrategy": {
+          "strategy": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": 1,
+            "maxSurge": 0
+          }
+        },
+        "linearAutoscalerParams": {
+          "coresPerReplica": 128,
+          "nodesPerReplica": 4,
+          "min": 1,
+          "preventSinglePointFailure": true
+        }
+      },
+      "upgradeStrategy": {
+        "maxUnavailableWorker": "10%",
+        "maxUnavailableControlplane": "1"
+      }
+    },
+    "certificatesBundle": {
+      "kube-admin": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDCjCCAfKgAwIBAgIID28eAyc3TUMwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NTBaMC4xFzAV\nBgNVBAoTDnN5c3RlbTptYXN0ZXJzMRMwEQYDVQQDEwprdWJlLWFkbWluMIIBIjAN\nBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnQdx/5T2htdh7hAU4NiYIjF9kNsx\n2erCPCP0F3GkVViqwoEHYnMOKFagyzdFlnliQ4eUxPRp0fPqn1JxyszUtSMMubNH\nzXQXk0SjBAu9dS/6VtaAYrUFUTpZU6cYUNVPZ4gN5yjA20GuUYjf+TWCt078dOPG\n/MyR+WvY8h1VfWSCDcEOXrtfpq5E9D09rqgYXjXAN9dykhdET26CRI+yWbN32cIG\ngzwjJh1KILYc/TCfjbOEr+YQDzmvYuBOvOILpDSPByM49Fh8q87jte9T7ydlG1RW\n1l7GADE+oB0VkQxL9uZqHxRqPte2qtQMwCM3EYhNq2LOoAaWFzx+/9/JfwIDAQAB\no0gwRjAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHwYDVR0j\nBBgwFoAUX4gIB2QB6UXJjATtV+cM3U6fnZkwDQYJKoZIhvcNAQELBQADggEBAE3y\n8masaSU68eq16upDvHqA5xyTJ+AI/NSyk8PZESnU2imLpO1FlS9KFnUAgLBReDI/\nAizBfwn5Kweu5BemJOygwX2xshTcuE5quGdd3i/R8cKNhgt/LggxSxBXFczyA8l3\nrmW8Crk97JCGyEdc0TkSpO1q3qxnOKAjndaTBqnT4b2xEoWSuHdtKM3Gv/aBP3Yp\nV9AuM1F+gfHeOh/Fo19KOOU+pJANV8ix4BQqZDt2w6R6l5MY+h/peWv3BmBvwPYv\n3Pbz8myim6FEkCCuV77MKggXPsK+hXLmwWtMvrBPjS7mCH23Aenq6KVq1GkIAzPN\nL0UnnMsswxHgHDbWpZ0=\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAnQdx/5T2htdh7hAU4NiYIjF9kNsx2erCPCP0F3GkVViqwoEH\nYnMOKFagyzdFlnliQ4eUxPRp0fPqn1JxyszUtSMMubNHzXQXk0SjBAu9dS/6VtaA\nYrUFUTpZU6cYUNVPZ4gN5yjA20GuUYjf+TWCt078dOPG/MyR+WvY8h1VfWSCDcEO\nXrtfpq5E9D09rqgYXjXAN9dykhdET26CRI+yWbN32cIGgzwjJh1KILYc/TCfjbOE\nr+YQDzmvYuBOvOILpDSPByM49Fh8q87jte9T7ydlG1RW1l7GADE+oB0VkQxL9uZq\nHxRqPte2qtQMwCM3EYhNq2LOoAaWFzx+/9/JfwIDAQABAoIBACgPMS7hgq7NnYcN\nBTaDKvR2KbFdqe8M67ZJ+chNTn4TW6S5I/gin/b8epK9K/yCROYzXWmNbL2J+03f\ny3XQIWeAZIuvR98LAcSpGuk6UX/m2Hd0y1XjFlMtjoI/u31LnbEszVcuV1zX+a+F\nOpYp54n6FX+AaFAvpAG8WKETiK6vIgbzMwvsARnJlJX8XXBE6+9qT0tYExiJCZtM\nCC7tzu0ezku8C6YFuPdzCW1Tm+xb8koOnHhwXjDPcp3V6rgpHWowR4qM4vZ7XBV9\nir2btdUlkazPYLhRz/r1p4ulZspVWy8d1clW9jgZ02BEeETgqWOx8PVTjcf+ZZZD\nHMXatNECgYEAzTUnDISh/+6Y/RC2JBMBARaeejuNjWc8WKFYa1g8l3eic6N+HDIl\n2JF4tD1vsi5uxLZzPR+wezpFTNtYiNAWXWvOyXfjZVHy2nrTyD7MMbZ8gqA8aOBp\niyMa7zif6Gy+RexTQRpSCAW4t3KBRc47qy/2qVRf4LbcEb6swZkmd0cCgYEAw+V9\nomFZOWluQK76XJaEh1+BHxk4+AHNRoksvmu8OTt+ABW0+P/1dnZDlhyl9bPbL6dL\nsbRsqf19plOF3bAaCcQAQgCNDVrLJJcGdxbw257KuI0NtVeIW4rxvNGSHcm7hsrB\nJLaYhxP1V1qf2WALT5uiYhivICQNkYzPc8RJqAkCgYEAwEKedVIG3dzUJbX0kNPl\nSvnAPVFyjBs/JOL2Doy7KEaEQ8fYLd6mKsQQzP4Kmmx6h39RdOEt3iZ4K0wPJQ+h\nBKIvOf9DY/hlimEt7x02/xS0j0ZFkxU+jYe0gpEQ8RiBJM4IKqTYWn/R0r5Lc/WH\nXhowBfHxan6orU9yWGh+650CgYA8FXZsSJl6P3keg8yse0oYz1UmObE8eCkC+m3r\n1dV8ZF/oHMBOIwuhkvJ150GL0+dlfVV9Is61cNeKHVIQxcOmvSQrGkopD3EBPwUv\nn6yuX8zjv/e1aCydj0dH16uOUWKgHC4TWaH8xEVazqP6oze06hJrLhEAta4nt12l\nr028KQKBgBaf5ccm83O+LQosAI/jVxRUVWOtUjj/hWz2irWhIkPTN+ltHmZ8Toqi\ncYc3tsyizIFRANNX09sBFCrak8NXSVQ631/PhmUmf+Hb0P82QI75BdYCdtDyMf6k\naB2GxyBQFS2Bg6r3sGmB12LL2o++QNeM1TRlnbWZ6EWtnRzqUZ7r\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM0VENDQWNtZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFTTVJBd0RnWURWUVFERXdkcmRXSmwKTFdOaE1CNFhEVEl5TURVd05URXhNVFEwTjFvWERUTXlNRFV3TWpFeE1UUTBOMW93RWpFUU1BNEdBMVVFQXhNSAphM1ZpWlMxallUQ0NBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQUxhenhsYzJlWUNGClJsWTNZQ1owd2ZqYzhkMjFBSkRwc0V6TU4wSlFSZEpydEVBbjBpUHJ0WDBuNzlvbkE5UGdMWTBkd2g1ZHMyN28KWHU3a3VtNjQvMXdockJQbE1nUTlPTFFjOXZUQ1FmNVZqM1VMVHU5L0gyU2xkSGxkSHFaQ1ZFaHkwSmI3ZDFxdwpUOTgvVWF2cFRjVkl6blJEd0xucGpTNUhQODQrOHhxZkVsWWlDbU1ENnd4UGJ4Q3VqdlRpUkxCWVpBdHQ0NFRlCkxsVFZSbUNhWjMzaTh4UGhWV1Z3Y250bW93WkJMS1B3dk8zYmJsUmxSZmpybmhXTXJnMEFQNFFPQUV2QmIzTFkKbU1EdDBMU0JDOVZoL2p5eHRQekpqUnkzV25uSTg3VkpWUFZvTjlpSm90ZUFUU0ZwZDNla2hhTFJRUEZMVEhGcQpTU1pGb3FBRmRiY0NBd0VBQWFOQ01FQXdEZ1lEVlIwUEFRSC9CQVFEQWdLa01BOEdBMVVkRXdFQi93UUZNQU1CCkFmOHdIUVlEVlIwT0JCWUVGRitJQ0Fka0FlbEZ5WXdFN1ZmbkROMU9uNTJaTUEwR0NTcUdTSWIzRFFFQkN3VUEKQTRJQkFRQjVta05ZQUZRNmRzOVVxb2Mrc1JZbnhCQ3A1N3dtQ1VTQUE2QWV3dVlIR1M5aWJHR1EreTZHem0vcQoyb1NmMWFNa3dlaE45OGlCNExrVzhRTjFHZnpYQnpVbWZQek1FQ2thd3Z6Z0ZQVGNRdDhRclZwOVhaZk9ZdDBOClUrbVpxaEc3NGNuV084U0M0QjZCTjNHajVhcTBrU09ob2wrTWI0T0p4SEh2VUdDd3grUWJ0N1kxMDJlQzVqWUMKcVdlQVEyVUJCZDViNkNBYU9yWGoxd2s1M3MxWXBKUHpEMmZUOG1vNjFObitLNmhONnpVdlMxQXIxQnc4TUNOZwpBcXZmSlVUejNma1UzRTQySzBuSUwzRTR3cmZ6OHV3UVo1ZE1RSWlrU2xnLytZSEtSbm94U3p5anoxVDI5cHpECkN0Mjk4cmMzSmhVeDFDZEc3VzdKNTNGQkY4MksKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=\n    server: \"https://192.168.125.10:6443\"\n  name: \"swagger-cluster\"\ncontexts:\n- context:\n    cluster: \"swagger-cluster\"\n    user: \"kube-admin-swagger-cluster\"\n  name: \"swagger-cluster\"\ncurrent-context: \"swagger-cluster\"\nusers:\n- name: \"kube-admin-swagger-cluster\"\n  user:\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURDakNDQWZLZ0F3SUJBZ0lJRDI4ZUF5YzNUVU13RFFZSktvWklodmNOQVFFTEJRQXdFakVRTUE0R0ExVUUKQXhNSGEzVmlaUzFqWVRBZUZ3MHlNakExTURVeE1URTBORGRhRncwek1qQTFNREl4TVRFME5UQmFNQzR4RnpBVgpCZ05WQkFvVERuTjVjM1JsYlRwdFlYTjBaWEp6TVJNd0VRWURWUVFERXdwcmRXSmxMV0ZrYldsdU1JSUJJakFOCkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQW5RZHgvNVQyaHRkaDdoQVU0TmlZSWpGOWtOc3gKMmVyQ1BDUDBGM0drVlZpcXdvRUhZbk1PS0ZhZ3l6ZEZsbmxpUTRlVXhQUnAwZlBxbjFKeHlzelV0U01NdWJOSAp6WFFYazBTakJBdTlkUy82VnRhQVlyVUZVVHBaVTZjWVVOVlBaNGdONXlqQTIwR3VVWWpmK1RXQ3QwNzhkT1BHCi9NeVIrV3ZZOGgxVmZXU0NEY0VPWHJ0ZnBxNUU5RDA5cnFnWVhqWEFOOWR5a2hkRVQyNkNSSSt5V2JOMzJjSUcKZ3p3akpoMUtJTFljL1RDZmpiT0VyK1lRRHptdll1Qk92T0lMcERTUEJ5TTQ5Rmg4cTg3anRlOVQ3eWRsRzFSVwoxbDdHQURFK29CMFZrUXhMOXVacUh4UnFQdGUycXRRTXdDTTNFWWhOcTJMT29BYVdGengrLzkvSmZ3SURBUUFCCm8wZ3dSakFPQmdOVkhROEJBZjhFQkFNQ0JhQXdFd1lEVlIwbEJBd3dDZ1lJS3dZQkJRVUhBd0l3SHdZRFZSMGoKQkJnd0ZvQVVYNGdJQjJRQjZVWEpqQVR0VitjTTNVNmZuWmt3RFFZSktvWklodmNOQVFFTEJRQURnZ0VCQUUzeQo4bWFzYVNVNjhlcTE2dXBEdkhxQTV4eVRKK0FJL05TeWs4UFpFU25VMmltTHBPMUZsUzlLRm5VQWdMQlJlREkvCkFpekJmd241S3dldTVCZW1KT3lnd1gyeHNoVGN1RTVxdUdkZDNpL1I4Y0tOaGd0L0xnZ3hTeEJYRmN6eUE4bDMKcm1XOENyazk3SkNHeUVkYzBUa1NwTzFxM3F4bk9LQWpuZGFUQnFuVDRiMnhFb1dTdUhkdEtNM0d2L2FCUDNZcApWOUF1TTFGK2dmSGVPaC9GbzE5S09PVStwSkFOVjhpeDRCUXFaRHQydzZSNmw1TVkraC9wZVd2M0JtQnZ3UFl2CjNQYno4bXlpbTZGRWtDQ3VWNzdNS2dnWFBzSytoWExtd1d0TXZyQlBqUzdtQ0gyM0FlbnE2S1ZxMUdrSUF6UE4KTDBVbm5Nc3N3eEhnSERiV3BaMD0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBblFkeC81VDJodGRoN2hBVTROaVlJakY5a05zeDJlckNQQ1AwRjNHa1ZWaXF3b0VIClluTU9LRmFneXpkRmxubGlRNGVVeFBScDBmUHFuMUp4eXN6VXRTTU11Yk5IelhRWGswU2pCQXU5ZFMvNlZ0YUEKWXJVRlVUcFpVNmNZVU5WUFo0Z041eWpBMjBHdVVZamYrVFdDdDA3OGRPUEcvTXlSK1d2WThoMVZmV1NDRGNFTwpYcnRmcHE1RTlEMDlycWdZWGpYQU45ZHlraGRFVDI2Q1JJK3lXYk4zMmNJR2d6d2pKaDFLSUxZYy9UQ2ZqYk9FCnIrWVFEem12WXVCT3ZPSUxwRFNQQnlNNDlGaDhxODdqdGU5VDd5ZGxHMVJXMWw3R0FERStvQjBWa1F4TDl1WnEKSHhScVB0ZTJxdFFNd0NNM0VZaE5xMkxPb0FhV0Z6eCsvOS9KZndJREFRQUJBb0lCQUNnUE1TN2hncTdOblljTgpCVGFES3ZSMktiRmRxZThNNjdaSitjaE5UbjRUVzZTNUkvZ2luL2I4ZXBLOUsveUNST1l6WFdtTmJMMkorMDNmCnkzWFFJV2VBWkl1dlI5OExBY1NwR3VrNlVYL20ySGQweTFYakZsTXRqb0kvdTMxTG5iRXN6VmN1VjF6WCthK0YKT3BZcDU0bjZGWCtBYUZBdnBBRzhXS0VUaUs2dklnYnpNd3ZzQVJuSmxKWDhYWEJFNis5cVQwdFlFeGlKQ1p0TQpDQzd0enUwZXprdThDNllGdVBkekNXMVRtK3hiOGtvT25IaHdYakRQY3AzVjZyZ3BIV293UjRxTTR2WjdYQlY5CmlyMmJ0ZFVsa2F6UFlMaFJ6L3IxcDR1bFpzcFZXeThkMWNsVzlqZ1owMkJFZUVUZ3FXT3g4UFZUamNmK1paWkQKSE1YYXRORUNnWUVBelRVbkRJU2gvKzZZL1JDMkpCTUJBUmFlZWp1TmpXYzhXS0ZZYTFnOGwzZWljNk4rSERJbAoySkY0dEQxdnNpNXV4TFp6UFIrd2V6cEZUTnRZaU5BV1hXdk95WGZqWlZIeTJuclR5RDdNTWJaOGdxQThhT0JwCml5TWE3emlmNkd5K1JleFRRUnBTQ0FXNHQzS0JSYzQ3cXkvMnFWUmY0TGJjRWI2c3daa21kMGNDZ1lFQXcrVjkKb21GWk9XbHVRSzc2WEphRWgxK0JIeGs0K0FITlJva3N2bXU4T1R0K0FCVzArUC8xZG5aRGxoeWw5YlBiTDZkTApzYlJzcWYxOXBsT0YzYkFhQ2NRQVFnQ05EVnJMSkpjR2R4YncyNTdLdUkwTnRWZUlXNHJ4dk5HU0hjbTdoc3JCCkpMYVloeFAxVjFxZjJXQUxUNXVpWWhpdklDUU5rWXpQYzhSSnFBa0NnWUVBd0VLZWRWSUczZHpVSmJYMGtOUGwKU3ZuQVBWRnlqQnMvSk9MMkRveTdLRWFFUThmWUxkNm1Lc1FRelA0S21teDZoMzlSZE9FdDNpWjRLMHdQSlEraApCS0l2T2Y5RFkvaGxpbUV0N3gwMi94UzBqMFpGa3hVK2pZZTBncEVROFJpQkpNNElLcVRZV24vUjByNUxjL1dIClhob3dCZkh4YW42b3JVOXlXR2grNjUwQ2dZQThGWFpzU0psNlAza2VnOHlzZTBvWXoxVW1PYkU4ZUNrQyttM3IKMWRWOFpGL29ITUJPSXd1aGt2SjE1MEdMMCtkbGZWVjlJczYxY05lS0hWSVF4Y09tdlNRckdrb3BEM0VCUHdVdgpuNnl1WDh6anYvZTFhQ3lkajBkSDE2dU9VV0tnSEM0VFdhSDh4RVZhenFQNm96ZTA2aEpyTGhFQXRhNG50MTJsCnIwMjhLUUtCZ0JhZjVjY204M08rTFFvc0FJL2pWeFJVVldPdFVqai9oV3oyaXJXaElrUFROK2x0SG1aOFRvcWkKY1ljM3RzeWl6SUZSQU5OWDA5c0JGQ3JhazhOWFNWUTYzMS9QaG1VbWYrSGIwUDgyUUk3NUJkWUNkdER5TWY2awphQjJHeHlCUUZTMkJnNnIzc0dtQjEyTEwybysrUU5lTTFUUmxuYldaNkVXdG5SenFVWjdyCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==",
+        "name": "kube-admin",
+        "commonName": "kube-admin",
+        "ouName": "system:masters",
+        "envName": "KUBE_ADMIN",
+        "path": "/etc/kubernetes/ssl/kube-admin.pem",
+        "keyEnvName": "KUBE_ADMIN_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-admin-key.pem",
+        "configEnvName": "KUBECFG_KUBE_ADMIN",
+        "configPath": "./kube_config_cluster.yml"
+      },
+      "kube-apiserver": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDnTCCAoWgAwIBAgIIV2L0UBiPIdcwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDhaMBkxFzAV\nBgNVBAMTDmt1YmUtYXBpc2VydmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEA2fvyym/4g5BC9mvIUtQ+25PxDVMyrZnGmDZwuTI8OU2zRqL2FS/alKAl\nFJNdkQ9ZSmxEac/h/drEYWZfLzUBUlzi6u0iO+GhQpVPjQRuh3VYikCGuPCYGipF\n5LXAMnaWf/VLbXnqHIfNUpGNuvXe4QULKMUJiY4Yr9apP/HVkmRRvRxZxpXLPGVf\nYhgbi9aijIqBA7QZWjntm0YRE6zM7HsPXbXvClo+yBr4g3VSxMzt6z4flBpu1YZp\nnyJZoJBxQrXRZFmn7DvSjD+pBlh5yXi7y1A/Nb8AyiZE2S1BWRGuKxiq46nwPjCM\nd4sHLvvRVEEQhb/tud8LAA9unoyZ4QIDAQABo4HvMIHsMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwHwYDVR0jBBgwFoAUX4gI\nB2QB6UXJjATtV+cM3U6fnZkwgZkGA1UdEQSBkTCBjoIRc3dhZ2dlci1ub2RlLTAx\nLW2CCWxvY2FsaG9zdIIKa3ViZXJuZXRlc4ISa3ViZXJuZXRlcy5kZWZhdWx0ghZr\ndWJlcm5ldGVzLmRlZmF1bHQuc3ZjgiRrdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNs\ndXN0ZXIubG9jYWyHBMCofQqHBH8AAAGHBAorAAEwDQYJKoZIhvcNAQELBQADggEB\nAIbz39J/GTZ34oNWSMIvxntVFL90zbB7uDI9cZQvlzjY/ujMJKksIooAKX05P52i\nuzmUtZplFqGvN7/5eF/fhTMA/Ov2h2Ig7cPejujPIo89w1GsYGaAEa7EEXH6bxD1\nIDCy2l5BHOzOm42ARI+bwU5qt7vh2pVqWU9fgesodI720Ex9ZppUqjxwJ13J2edH\n9gmjG2B0G7FyfSjM/tEJkwppdMPJ86IRXhiROYCN7FV37rpMLIKpEBPXgj5m7U8U\nAtDDAlxk1NKwCA77VCLLafqCERxeK7tjvn+j9dnvDS5tdsVBKbVk11iPdmdfNNby\nx9Bd0BOqXYYfNIqmHfM2zGg=\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA2fvyym/4g5BC9mvIUtQ+25PxDVMyrZnGmDZwuTI8OU2zRqL2\nFS/alKAlFJNdkQ9ZSmxEac/h/drEYWZfLzUBUlzi6u0iO+GhQpVPjQRuh3VYikCG\nuPCYGipF5LXAMnaWf/VLbXnqHIfNUpGNuvXe4QULKMUJiY4Yr9apP/HVkmRRvRxZ\nxpXLPGVfYhgbi9aijIqBA7QZWjntm0YRE6zM7HsPXbXvClo+yBr4g3VSxMzt6z4f\nlBpu1YZpnyJZoJBxQrXRZFmn7DvSjD+pBlh5yXi7y1A/Nb8AyiZE2S1BWRGuKxiq\n46nwPjCMd4sHLvvRVEEQhb/tud8LAA9unoyZ4QIDAQABAoIBADJBIJ9FIzEJoDZ5\ncMyPvBIZUFh3Ftbo/dz3qBM6HqJDZJJjXYJS7vyW0xWkR8z6keZTgY43a+1/cwjV\ndhpHCQ/49COfGeZeRTQ5ggaLwAOgrRHqgGTAqwBVQJnSwQWhS18iqQoLMkrzkAV6\nIwe4SXLtG76Bdops5Qoc3hYs5cUCyNjT6oq0ghloNo8hKS4Q6ELet4kmzvoEbRnf\n9Z41B6GmIS6IAdPjLVs/kUcRJBMNeR1ibRW/13PTjpNJRHphIAgYy+xHUHAUp+yg\nW9AFtn5AWPkTzAC+1tXixLovy1hixqs4ZqPaOvXkCDYa/BrjB/yS4BYwt+nsGvW+\npPZd7tUCgYEA8HJB1/lmTMYbqCJx/OjOvXQBAFj2lMCCnLhhE9mgIzxb0AL2gJfp\nsbe9LduKdh8UoZU6V1EXKGVSAMcPueZjPl4d6DiuWh5XNxiGBZBww3Yu2lx18st4\nLBckEoQu3EOlEDDlkYagwZCOLvFC3VFMTsGwgiX83m2RxW5vf1sNJB8CgYEA6BW4\n/IeuqJoinFYjQmryPEqFXIuo9pl9Lj+kdbWf7AKs0EuY2EuN2/Z6WXqwIhh8d7sX\nPhE3iuVV1RUBIBBKVbDzz/C8SUG3rEFY4imDxTx8O6Zyyf3S4FgYouwwZzcsfB/L\n0EgYiU6mG636L4+og7bk2yTnRC9YUikSpbp+gf8CgYEAu7Akj4cBgMpfilYg7k94\nGdC0e2X2TNUc32LZfFozM24JKQ03B9gNNol7ZZFqupu2Sg8ndEM7NXApm6vHLdCW\nBXgIFl4wUu4+HCbLbwp5y0m0dwUXmMeU7a2+namKvqsa7NGOUZNqZs4E/sWa8RFl\n5FAzDNTEV4fl8twqspoLXvcCgYB21piwhnGC19odH2ZSnhyHjskXCFRuYU3eHqyB\nsYy/9uayieMr7hQnq+AebVo/OzaQwHY4S+ya7K+0ulqnJnBJzKAru+NNx57bT2LJ\n++QDXONoT+S7VYNjaPjEhBiM4Y2fyVA9yIz30hPwXHedXvw05bPuGslo+q1I9Msd\nnY8l1QKBgCsLe48ySloqc9e5nTN2kf37rCsFh6Iq4kv9bxg8Y7/8wXoH567WSKA5\nGtQe4O56EOeiczM9MVKen5WKxauRGYbZRwJGp/chKA6QvJMqvoRH0L++jUBPKDsn\nAeklpwot4vavM2G6OHa+MD/0+1n5wCJDWbGEtPrQ7g9ZazcSjaGo\n-----END RSA PRIVATE KEY-----\n",
+        "config": "",
+        "name": "kube-apiserver",
+        "commonName": "system:kube-apiserver",
+        "ouName": "",
+        "envName": "KUBE_APISERVER",
+        "path": "/etc/kubernetes/ssl/kube-apiserver.pem",
+        "keyEnvName": "KUBE_APISERVER_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-apiserver-key.pem",
+        "configEnvName": "",
+        "configPath": ""
+      },
+      "kube-apiserver-proxy-client": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDJDCCAgygAwIBAgIIFVGnutWnwKwwDQYJKoZIhvcNAQELBQAwKjEoMCYGA1UE\nAxMfa3ViZS1hcGlzZXJ2ZXItcmVxdWVzdGhlYWRlci1jYTAeFw0yMjA1MDUxMTE0\nNDhaFw0zMjA1MDIxMTE0NTBaMCYxJDAiBgNVBAMTG2t1YmUtYXBpc2VydmVyLXBy\nb3h5LWNsaWVudDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMavVIOf\ntMfe/MpUFRNP9DTf76OaBDeiJdWMryVUci3JcQrXgxDFq8tPpXa/qE1vNMKDMrQb\nvIsV3dQcJXlS7ioS8iCFx9yIkR/vQne8Brq8SaSGzjbzbGei2j2TkTfjEzzCVWPk\nzs13WVqCswjgwMP6JgQHH0p9SLlPTfiL+qhyjWlHD4MUE4WZ/JiJK2Z1MKLhDPsx\nuIt9p7+hxXxmj8nF88B9uhQq8Fd7FpC6gs70dNjHVPcl+pum75LUf0VfQIj97Cij\n/gtDmbp94RaDCmYOy0cWpqF/Ns0GGqDSNzcVVULmQ8yVtEq0pEh8v96frXw7X+WW\nI2SkWjYYYpy6DIcCAwEAAaNSMFAwDgYDVR0PAQH/BAQDAgWgMB0GA1UdJQQWMBQG\nCCsGAQUFBwMCBggrBgEFBQcDATAfBgNVHSMEGDAWgBQs98xTBQQBLAPIXX7CLicG\nDQDV5zANBgkqhkiG9w0BAQsFAAOCAQEAKuL3+SUShI0paeM8YQDksryQljK4Q4qm\nzZAa+2Osp9GBLHQSVuPLiKT9V79TxWLwgKE4XstN5O4BNmjaFF8GLP93CF945D6z\nHogVVSohyj+msFm3jO/ZspZo1f8wOIWc+8e+bbmL8oDoEYXSdf6PRyo0e0vZTYQ9\nWqrOXoIAbtXw5CTOWOOZmhZbh3Qea4U1qGetP35BGdtlOYBhMeL+KYMYC4+EmKp2\nlwjWjlR77i5vIufvFMQrHjVQuEfUdjiqGFCL1H1PC6XafAsHsGbmRPqk+LhLXYH/\n3ZvYUQqmX9/qSqzSNGzvKn15Co2a6gz23o90YBMxwaoEnRofgcZtrg==\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAxq9Ug5+0x978ylQVE0/0NN/vo5oEN6Il1YyvJVRyLclxCteD\nEMWry0+ldr+oTW80woMytBu8ixXd1BwleVLuKhLyIIXH3IiRH+9Cd7wGurxJpIbO\nNvNsZ6LaPZORN+MTPMJVY+TOzXdZWoKzCODAw/omBAcfSn1IuU9N+Iv6qHKNaUcP\ngxQThZn8mIkrZnUwouEM+zG4i32nv6HFfGaPycXzwH26FCrwV3sWkLqCzvR02MdU\n9yX6m6bvktR/RV9AiP3sKKP+C0OZun3hFoMKZg7LRxamoX82zQYaoNI3NxVVQuZD\nzJW0SrSkSHy/3p+tfDtf5ZYjZKRaNhhinLoMhwIDAQABAoIBAQCQyQffeyx0Um0I\nzEknb6ZYObAaGoxkNkc33XNs0qL59sfnzLD4MfRFDl9Xr8bn1tgtvwnd8jBtcpva\njEBKr0Jbar8DMDo63VJUYTigpGaLAdbwjEQOC0m+JBDBup2iillkd4FecEi7tfNp\nX8E0AQS4S7wUR1RoJfAvCjmZm/gnczftjcXtVzya3pDuN4tcB+DzAxQA3qBV5Ua/\njkp/OHoWXGrGqyIpy2kkZXIra5++zqb6k6DV+7Y/laigiZ74SLz8Eaki9G0Q3LwV\n0E3hwef1sAITcnsQ7ywhzD71tfTM1wZ5foTn9LYNePrPRLkO4HeWANLNMTtEiX4h\nusv02pyxAoGBAP06AzVmfH+SVIpDxXeUXIsXrRr+OGNOVFXb8QxNCpdXCCwPZbHT\ngrb3uVNs/rpOx0Nidl/WXQAtSu98zyq0Y2YkJTosqWC6KBMBotsSLtBX5MvK7O0X\nx/q+VSOHmVscV7kqD+R9Awj4/Q1kUlDmyqVzNwGqPYrqPafXEajn3+rbAoGBAMjc\nZT/z2N4NIlOcr+zK+JjguM/4vGPTtupomabw4ml45G7Pq3sDS0U+L+ojDGsOfe6c\npngYLGPlAYxrTYP8DZxLkwPNL3TySKqGvq33owaLYdftsUDY5c92SJWSiGeenfzA\nkYLQt3vuwme1Q986E/hhZX5UXji2EY9ZzODLypbFAoGAAa5H5SvX+bTL8NsATYnj\nj1zJ3lr/ntEfSC6ci/ta7aQ7Pqefgi2oOXSteztG+Y+aTP0zUfGHTn/+dlZ6vYrS\n+hOVV6yCN00lBPNG1HNrciCTOTMQnYZB4o0u3XyB7RPkFSuNTXPy+DVG4LbgwP63\nK5/3JoCtxeVGIX4Q9PENEG8CgYBnGGiHqLt5Tbh+vf+2RH/QyBdT99GKU5KhQksL\nWrx7cmedUM4td4Vc5wxk2tR25ptQq+rt3Up7g4GF91V0Fx1NSaUN4HUpS2pszHh2\nhpKQu13fHMtMA4gBMi8TRoDo3ossvhJx2Hs1C1mRLYLGwuKZLDSR4O/zn8/niioU\nf8VeGQKBgQCa9AiOD+xgEBjviF6bmo7gBOpxexZjspN96wADrXaPrZMWR1DzxX+2\nFsygEqVqaZr5pMru7A6hDgoITEtYs+03XkZn45EymIEE/+JC7DyDKAEvB8QqclO8\nTq8SA9ICX0KgB7AycCtMxzygbrwX1MgwL+d/XzP1H+bJ59KIpvVGGA==\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-apiserver-proxy-client-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-apiserver-proxy-client-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-apiserver-proxy-client.pem\n    client-key: /etc/kubernetes/ssl/kube-apiserver-proxy-client-key.pem",
+        "name": "kube-apiserver-proxy-client",
+        "commonName": "system:kube-apiserver-proxy-client",
+        "ouName": "",
+        "envName": "KUBE_APISERVER_PROXY_CLIENT",
+        "path": "/etc/kubernetes/ssl/kube-apiserver-proxy-client.pem",
+        "keyEnvName": "KUBE_APISERVER_PROXY_CLIENT_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-apiserver-proxy-client-key.pem",
+        "configEnvName": "KUBECFG_KUBE_APISERVER_PROXY_CLIENT",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-apiserver-proxy-client.yaml"
+      },
+      "kube-apiserver-requestheader-ca": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDETCCAfmgAwIBAgIBADANBgkqhkiG9w0BAQsFADAqMSgwJgYDVQQDEx9rdWJl\nLWFwaXNlcnZlci1yZXF1ZXN0aGVhZGVyLWNhMB4XDTIyMDUwNTExMTQ0OFoXDTMy\nMDUwMjExMTQ0OFowKjEoMCYGA1UEAxMfa3ViZS1hcGlzZXJ2ZXItcmVxdWVzdGhl\nYWRlci1jYTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMesc2/Fe3jF\n1vcU5wF7FHHe9JA3/9Uh/do/+0uhx3FaF4UVG/X8tGPjzyYD1xYI67GhrNGcrw01\nbyYJOzaJPINuSfqanHx9axnt+nNe6qG3y1DxqYokD8+4USYoEaS9RYcz99gREPvA\nNReJL+oyUmH7IuRFSQB9vsvXED6fl2XIfPVBZhseEn9UceFJ4Z9fiHdSInfXnTWO\nM//KnlhuVGujZGmx2i/HziF01oCCMrSZC6FU9zxouJ6ciMDkK+X1dP25hn83C/I8\n3mzvD8U9nXUMGjMpLYAQpsHRG9OgoN7YzKz5KI8qqbsfZUzqALFo7n8dJ8v8kX7G\nrLCuXt0KvsUCAwEAAaNCMEAwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMB\nAf8wHQYDVR0OBBYEFCz3zFMFBAEsA8hdfsIuJwYNANXnMA0GCSqGSIb3DQEBCwUA\nA4IBAQAOQodakwa0neQpOcCgaNskOdafFjYnvAJZ4nD6ilL+uKnLTi4oR5/OXnNf\nsFmMmIj0lq2II4b3QhiIOpblAfP2GR9guyszu3rS1aJlcLeQGYWGv8wHUdhm6ldR\nYwm4o2Ov1m8Z+PFknAIW/zvwYiX+U9DhApMp3dx5tAgNd0ymgp0YtCjCDqCUOZjs\n5KNlyVci5IdZk5yO/Qn/Oh+o8xFYxHSSXNpq+7GYKFGVt3zOh6bybiC2PB6RmyN6\ndL+16TCVZETV+getOM65TxMDJ7qzXG6yo5KX/O/TKhfZBc7PKGCRLd0xQx0UBM7Q\nKSvyCwUYCM066Nti5ZGOrHl66n4h\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAx6xzb8V7eMXW9xTnAXsUcd70kDf/1SH92j/7S6HHcVoXhRUb\n9fy0Y+PPJgPXFgjrsaGs0ZyvDTVvJgk7Nok8g25J+pqcfH1rGe36c17qobfLUPGp\niiQPz7hRJigRpL1FhzP32BEQ+8A1F4kv6jJSYfsi5EVJAH2+y9cQPp+XZch89UFm\nGx4Sf1Rx4Unhn1+Id1Iid9edNY4z/8qeWG5Ua6NkabHaL8fOIXTWgIIytJkLoVT3\nPGi4npyIwOQr5fV0/bmGfzcL8jzebO8PxT2ddQwaMyktgBCmwdEb06Cg3tjMrPko\njyqpux9lTOoAsWjufx0ny/yRfsassK5e3Qq+xQIDAQABAoIBAQClZqT5IY12Lew0\nIIx7HYmCCj5sePbjhpTSBc4UiJ69tvNkume/DOYhGMSvqN6y0hDrxBF0UWZweqLn\nzx3Nv0DxXprJjOmz9fCSOiANEcMq0yUImCbo15aBax1NjkOPQ3ok1VepE/oNkNpp\n9KpMRgMYRwBQN1SRo5g5Ip3CQlEXbdYBoAF+tzWyZkAuR9Dv2NzbbRU7F/H2Tv4W\n51bTiq3LE+TSChmHaxUHI2ZGFWWiihQ1tMQWxM4ExqU/bi5KnmbTESCwriuwW8XT\ni6EVwqQyUrNEtwqBmDbnJwfAo6WlX1LoK30rW0+78SPrAa1EHKkx11p3NqLUZ4GA\nc23HJJwBAoGBAODv3BORRMtpr4C7NhzZ3pZiaxDU4vz0yujGs4t/uWRYddoMHndi\nzChO78uZWOM9IajHf5R7lzTM6/nxtizywxOD3OGshEyyW9Y1mq0ifynerRnCKAXV\nebse1L2Aj+CYmn5P76CpgtPPMgTY8WOllKOCoExOS/70pN+PHlWouuyxAoGBAOM/\ndqk8ZYR0gN1vYFqApcfPSpVoftz/fp01cWW20qiY3cp4Nufi6sOJ+RiXDfFEsLIm\nOLTc/pxyJg+Spy2v6VbBWbioYF+WKHQcsGlrbAOFg2rdmmV+g6QJwfnKJXhUGkcV\nvrw6CyZ3p9Ai6XwMKOJrn0ed5sXxrOb5BeV3hqhVAoGBANKMksMaKnwBHE9ybc+J\nvEmmLDPgIezHsps7S1rbnoyoJQCKcYYsy487fEhm7QYf9b7Hpss0+K9q1cPrFixy\nvFkrB/mSA3DLTx1upa9EaCWoEv3WeKIlVcHqtRYBHiwMjCiJ6HLJ2PUsr9RLwYAV\nwNFg920VqRsoop/Elo911iqxAoGAMXv9W+bh+FDiStXY9nwzHWp/RD+n+HnOWW9s\nzQhdoQcArPk2g5I/KutdicRC7fnWPETkbkX9T5Xvwc5ehy1aM2ERJ4vKyKXLE1W3\n+IzCzZWCQ4AUAevlwI+7ZKhnNmeh/T639QbyrKK7sTAZBcEkGgHzgkXZHdt9miI5\n7Xj0oq0CgYAe3up6xt9KD546f3zmp7Aky3vyFq9ZGhXXGFXdJ2rUlZtWsc6m4jTh\n7CVllI7gTeUjTboZE6sM1D7MMT6NIAXEwb5nSEBzuLaLlOk2CRK9DCReTo75mnNY\n9PQzBjhagUNp+VoL5ytUj7vfMTykXNyuQSzvcDVL3DhuSzg5HzK+8A==\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-apiserver-requestheader-ca-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-apiserver-requestheader-ca-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-apiserver-requestheader-ca.pem\n    client-key: /etc/kubernetes/ssl/kube-apiserver-requestheader-ca-key.pem",
+        "name": "kube-apiserver-requestheader-ca",
+        "commonName": "system:kube-apiserver-requestheader-ca",
+        "ouName": "",
+        "envName": "KUBE_APISERVER_REQUESTHEADER_CA",
+        "path": "/etc/kubernetes/ssl/kube-apiserver-requestheader-ca.pem",
+        "keyEnvName": "KUBE_APISERVER_REQUESTHEADER_CA_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-apiserver-requestheader-ca-key.pem",
+        "configEnvName": "KUBECFG_KUBE_APISERVER_REQUESTHEADER_CA",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-apiserver-requestheader-ca.yaml"
+      },
+      "kube-ca": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIC4TCCAcmgAwIBAgIBADANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDEwdrdWJl\nLWNhMB4XDTIyMDUwNTExMTQ0N1oXDTMyMDUwMjExMTQ0N1owEjEQMA4GA1UEAxMH\na3ViZS1jYTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALazxlc2eYCF\nRlY3YCZ0wfjc8d21AJDpsEzMN0JQRdJrtEAn0iPrtX0n79onA9PgLY0dwh5ds27o\nXu7kum64/1whrBPlMgQ9OLQc9vTCQf5Vj3ULTu9/H2SldHldHqZCVEhy0Jb7d1qw\nT98/UavpTcVIznRDwLnpjS5HP84+8xqfElYiCmMD6wxPbxCujvTiRLBYZAtt44Te\nLlTVRmCaZ33i8xPhVWVwcntmowZBLKPwvO3bblRlRfjrnhWMrg0AP4QOAEvBb3LY\nmMDt0LSBC9Vh/jyxtPzJjRy3WnnI87VJVPVoN9iJoteATSFpd3ekhaLRQPFLTHFq\nSSZFoqAFdbcCAwEAAaNCMEAwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMB\nAf8wHQYDVR0OBBYEFF+ICAdkAelFyYwE7VfnDN1On52ZMA0GCSqGSIb3DQEBCwUA\nA4IBAQB5mkNYAFQ6ds9Uqoc+sRYnxBCp57wmCUSAA6AewuYHGS9ibGGQ+y6Gzm/q\n2oSf1aMkwehN98iB4LkW8QN1GfzXBzUmfPzMECkawvzgFPTcQt8QrVp9XZfOYt0N\nU+mZqhG74cnWO8SC4B6BN3Gj5aq0kSOhol+Mb4OJxHHvUGCwx+Qbt7Y102eC5jYC\nqWeAQ2UBBd5b6CAaOrXj1wk53s1YpJPzD2fT8mo61Nn+K6hN6zUvS1Ar1Bw8MCNg\nAqvfJUTz3fkU3E42K0nIL3E4wrfz8uwQZ5dMQIikSlg/+YHKRnoxSzyjz1T29pzD\nCt298rc3JhUx1CdG7W7J53FBF82K\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAtrPGVzZ5gIVGVjdgJnTB+Nzx3bUAkOmwTMw3QlBF0mu0QCfS\nI+u1fSfv2icD0+AtjR3CHl2zbuhe7uS6brj/XCGsE+UyBD04tBz29MJB/lWPdQtO\n738fZKV0eV0epkJUSHLQlvt3WrBP3z9Rq+lNxUjOdEPAuemNLkc/zj7zGp8SViIK\nYwPrDE9vEK6O9OJEsFhkC23jhN4uVNVGYJpnfeLzE+FVZXBye2ajBkEso/C87dtu\nVGVF+OueFYyuDQA/hA4AS8FvctiYwO3QtIEL1WH+PLG0/MmNHLdaecjztUlU9Wg3\n2Imi14BNIWl3d6SFotFA8UtMcWpJJkWioAV1twIDAQABAoIBAH91seR8G43e7LAP\nV+PcRsqwkYgj025FqfoZ6l84E032V7z+SutGcMoMx5dA6rmwxvaRETEQG7M/J6Ow\nLKQ8KeKDl0IV/qvYbiuxnVQqBdJCrJ9yMTKCVEtp5nUY0t4YniYg+4apjp3VLRPJ\nX9f4HoqI/Yc9EUJiPl1P1aK0ZfNmYo9nY2i3LoZhkpGNnl8Z+9A9CGRUG5LXGREV\nFB9SEUeyNSL7BaVgJ5dYSG+m9ahQ2/t/ErDXV5Y3TpETe7gFMNqnlVuXqn+mDXR2\nMPQpMe3atJYm8p8zGX79P1veGP0NlyHeh20NB1F/uNSsiFMtRs717baZrOHilS6a\nZdgYWMkCgYEA0rUr62gKI75XZDeBFX7iQP5jRkIe6WiN2VOIJdpaGlgeOuRfOTQI\npN5FxNlrKLvw+s8TMCoNy9NywpT2uzSLSJ1ccS5CkxfaiGOigZ3vr2k6TgRpVRxT\noNT+qveW3WJWaP6o89Lb3KIFIxLA8sGKsqANQ/gy9fk1+PDeIfKeu5sCgYEA3fmE\nrscinKtVrA8lpbC+oLHhRPNZlRcs84zmL12YMDN70yC1by0Zz/q8dBUQta8nP2N+\nuA9afiE+zP+O2ZoD7z94wVx7BlplVabAc93/nSpd4sxLQmV0MF2cLDC/WYNoE/B9\nOMUrCub6/G7VVCD/O92Cl3ONcR5VvuGDoWKOVhUCgYBwWSmR22eMp3DxfqbVT1JU\nVU+ZpqfUzGrV9jQh+ssQQOvdeudLGPOC9QE+dK8uiQd0s/UHOWUhyRzno4XrS5j4\nnu8raf8VbyKWlomPkya54OG1t6RyPShaGTew8VL/t+9bDG4Jk+SnP7x9dwJqbcgG\ndlCcbTq+7KJamhPXBgadAQKBgDniUWlKYIo+W67snEKi3nMFL9tNIjUwv/Ya7gO4\nAnG/WzDpPKbrOen0VqRmwd6++BsdlPPmfRCbFsdadSPld9Ux1gmGVkaH2BkHzPPq\nFjgjzivQXmfIEQ5zusADTkLHc6KPefgN4nWLWjPtqw+vMx+nWeCor1+qK24FXM/+\n5WMpAoGBAJX9C/cE5NS57HN7zfO5Bw3QQnnijcF04KUZDijwcGE58d7yD+KNLKZj\nDMIg14ScA7xr73MLfERTYuQD9XMWmR7iO9W+EDPuBGztB7jI6b3iYo9mMN5daIYL\nMP4TUP4Cu1dc9WmRDjZnF8flufG9pLd54SMEOVMxbL5HyAXOe2jl\n-----END RSA PRIVATE KEY-----\n",
+        "config": "",
+        "name": "kube-ca",
+        "commonName": "system:kube-ca",
+        "ouName": "",
+        "envName": "KUBE_CA",
+        "path": "/etc/kubernetes/ssl/kube-ca.pem",
+        "keyEnvName": "KUBE_CA_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-ca-key.pem",
+        "configEnvName": "",
+        "configPath": ""
+      },
+      "kube-controller-manager": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDBTCCAe2gAwIBAgIIHtEskoWY52QwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDlaMCkxJzAl\nBgNVBAMTHnN5c3RlbTprdWJlLWNvbnRyb2xsZXItbWFuYWdlcjCCASIwDQYJKoZI\nhvcNAQEBBQADggEPADCCAQoCggEBAK1R74DgDkZ9Fv//RtSuBM3SFebCdjt+xMDI\nsGxR03tEQ++hs80y90uy4eBWJXJrllZjG/Uh+T4U5CuKv7CB9VNlW3RYElArquCt\n/vZ8IqmtM914mGczrcppftgUShQGxR6KEwoauVrgZJjy82fek7ODmKZEdWO37h0C\ngUKnTaeVG9cKBgOcjyHX/CEZAMvVVYf1WxFu1AuDqeQkpJoWyySV59MZj4pKnI6S\ntj8fUpdC5jI2+NnQuwoAZbWEvUQhIqCfMK2+YBdhJ9GxuNGN2yUFn94aBc2ZxiJm\nJS9Oi8gH53NCvC1ZPUwpfH+rbhJ+3x5ptiSazZXMV9uf4VD8Fq8CAwEAAaNIMEYw\nDgYDVR0PAQH/BAQDAgWgMBMGA1UdJQQMMAoGCCsGAQUFBwMCMB8GA1UdIwQYMBaA\nFF+ICAdkAelFyYwE7VfnDN1On52ZMA0GCSqGSIb3DQEBCwUAA4IBAQAml67ntaVI\n0NkaReum0v2Ze5OPjKy711CDM3GHASjoTY7dEaRZ5I3s4m/INXgH7HVCNUpUpFUu\na+GDG+wEqanM/TCpGEcWzhzxYkEm7H8Vg6mmEPvgFIBPzTTP3UVOvfoxiGNPSFK0\nxLuj8Y+5v39PaZZK3CR58kwDJz5lwen8Rd8vkcey+nlxaxltAXSqQDx/tCEJgf8g\nDsZCh6Nt0kqSy8h/xgv+B128zrwGrcXNvpq2Yl6B6ARAvUXp03ctQEpH5WFjt7y8\nYRkdO+KIJx0U4wHCMhX4InA2gzrKAiAhXF8bxMM7V3r7vvNDDHYR8T5aOaRYI85G\n0NPVQBWmhPNg\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArVHvgOAORn0W//9G1K4EzdIV5sJ2O37EwMiwbFHTe0RD76Gz\nzTL3S7Lh4FYlcmuWVmMb9SH5PhTkK4q/sIH1U2VbdFgSUCuq4K3+9nwiqa0z3XiY\nZzOtyml+2BRKFAbFHooTChq5WuBkmPLzZ96Ts4OYpkR1Y7fuHQKBQqdNp5Ub1woG\nA5yPIdf8IRkAy9VVh/VbEW7UC4Op5CSkmhbLJJXn0xmPikqcjpK2Px9Sl0LmMjb4\n2dC7CgBltYS9RCEioJ8wrb5gF2En0bG40Y3bJQWf3hoFzZnGImYlL06LyAfnc0K8\nLVk9TCl8f6tuEn7fHmm2JJrNlcxX25/hUPwWrwIDAQABAoIBAFCr2nZ50ysr/hCZ\nmTZU6ReDuX329WEr2BiDUNqaG308gQKAmVfhaQlq8YehkTx4pzj+WHz4mzIyNyGt\nKxvU4YM3oiG8/IkkShzZ39qKXPftDj7/arBedX3JLKkWiIRZwlY8njAN0EhkOW6X\nZoPqLYVYsyxwoNMRQVtvVwrXJGXjVHqs+/pvBAlnJSxRli9eExa2jndcrUK9nEKU\n8fyMviWozrWq1YwCQrpPQNCV8sR8zLi6rEVp91ovtwPXYnJ6HaYRLPApWMsgPIT0\nrMHWXXsQ9zOVSdYRmDTlhL4jwCau67KsH2goaUgx6z5kk/+nKyqFlT4dx1NA1c6u\nNB/fa4ECgYEAwKCHJgrKHF+/YMTMxrM00JeiJQlGYqo3vpcawyZ8A1WI9heOib2W\nI0x8KOqSzKuykz11sSYBVZQhR9Jr+YLpS39PZju2wluE80cyD5ejvkJfV/n8sulE\nQF12O+gWbHNkc60NxrIb6LNJr7vEM0EF06NCuYCUU8oO9SC7ZMBnE4kCgYEA5ldU\nbRo7ZiHxi0kKEwNxTNZ2e4m1mMuextfN4y9Enm5hKq3Vc9mHs+Yolg9FqeLW4HAp\nPGwe6m1rfmca3D6pgVNF1DyI2aaz7MsTfHUJm0uq5PUhTn/u0JMSeVPFIMmI6Zbg\nJS5eA9L9T+Jz7rbtK9PnRjGYdPQFjQgRg1yncncCgYBBjB6RHmjKIPbBmhZIoyCc\nvoyJZ8+QsXWIoGiV8ZmPlOKnQzrYui/F0TgKwE+139NDcU2EO3eGxIJSq1Lcs+Rp\nMWg2VKmLF5N1KUvqrGIm0vUYvdN0mhYEhQk/t2kx/E45YrDmZSNEGwY/C3jnLAAs\nlUiWUR+oJ4DRfxLlZOduaQKBgQDBAh5BSYDKRNkEMFCbu/+9NduUCsE65iwGTCA+\nJIZoBu+udnjsmTMnoE0T6HokL2qEKBe1hJenMcan5TdRo8QfFKrne03kqtYLLeMH\nH37MPOxW67xb7cErzoDlXzdIEPeDXCQ3o5GtvKb7wDIKrgcv+WDKpZYtMahRE5ix\nLPs2YwKBgBm23DD5SU7fLy/oyAKCBotQ2PX9H/gmyRgj36lxo+VZZrboXV06P7cC\nB8NSefW6F4CQkII7t+R+cnJxZ17bT6xGffNYHwc6YENqnxSut1DWQWMXyxi0D69n\nZYo7REo+hdsO30diYSc3P9snTXr2PpXiJm4VFnCWEiwG3iiYKy1v\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-controller-manager-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-controller-manager-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-controller-manager.pem\n    client-key: /etc/kubernetes/ssl/kube-controller-manager-key.pem",
+        "name": "kube-controller-manager",
+        "commonName": "system:kube-controller-manager",
+        "ouName": "",
+        "envName": "KUBE_CONTROLLER_MANAGER",
+        "path": "/etc/kubernetes/ssl/kube-controller-manager.pem",
+        "keyEnvName": "KUBE_CONTROLLER_MANAGER_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-controller-manager-key.pem",
+        "configEnvName": "KUBECFG_KUBE_CONTROLLER_MANAGER",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-controller-manager.yaml"
+      },
+      "kube-etcd-192-168-125-10": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDmDCCAoCgAwIBAgIIL7sjU4VGnG8wDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NTFaMBQxEjAQ\nBgNVBAMTCWt1YmUtZXRjZDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB\nAL5X6QdBHL1In56givI1Mr1a6RsvJWHFXGMB7VK6Ki1SQJiRl+XF/AMAFvEDWpl+\n+RD/aIz+tklqj9+3xVJWE3R1d53Iz/YAg7tqZFUuIRZTtyU5w6vmTNFa4JLNeaR4\nkv3rmX+iDGhHdxx7nMEL7sN+Y/RfAbR+EwawQI+YcNuVxdguNFhCfXnnd/wFf9Rf\neFZOW72H5+bz6dS1I+EJC68qw0lYPxCUrPXs9fRHlhDx8lm3PeDHw5lylarcyf+O\nh8tdmmjL/jwf9SYpC4jlvdVi4oVP9BM+r/nPqVxiDHw8IH0gJKU9T3pAhuGjwXr+\nvwQlcR68+OTQrV5SokIpzyUCAwEAAaOB7zCB7DAOBgNVHQ8BAf8EBAMCBaAwHQYD\nVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMBMB8GA1UdIwQYMBaAFF+ICAdkAelF\nyYwE7VfnDN1On52ZMIGZBgNVHREEgZEwgY6CEXN3YWdnZXItbm9kZS0wMS1tggls\nb2NhbGhvc3SCCmt1YmVybmV0ZXOCEmt1YmVybmV0ZXMuZGVmYXVsdIIWa3ViZXJu\nZXRlcy5kZWZhdWx0LnN2Y4Ika3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVy\nLmxvY2FshwTAqH0KhwR/AAABhwQKKwABMA0GCSqGSIb3DQEBCwUAA4IBAQBryzvJ\nPmhlXtQTg0Tzm0qx9Dl7OSXxZUCTmqpr7awIeZPQIBsVenG/+Bi1kfA5rP9UlAOM\nFl5hnuJ2m0DDMXFO+74xqjZudbDZV4VFqEjPGC0b0mQYC3TFKHEUuIK5zQGLi8MF\nv1DEZiY2Ngvq1aoKYn97bFOHNR6Wl5XlI5h1zkdjEIM70o5m0NB9jV5dbMe6cmwp\nwVaQNl7oyddMqY5MPEvFyioX2tin9fuliigLziICtroQoV7hV2VzOf8f4uqJ1FON\n/BFRILyniSAMv1FNXWkC0h3yVGX6vWtUCYNW5Gp4muRQmv/9TdGcER99yj/kYEK6\nu0DAOll8G9tR5qeQ\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAvlfpB0EcvUifnqCK8jUyvVrpGy8lYcVcYwHtUroqLVJAmJGX\n5cX8AwAW8QNamX75EP9ojP62SWqP37fFUlYTdHV3ncjP9gCDu2pkVS4hFlO3JTnD\nq+ZM0Vrgks15pHiS/euZf6IMaEd3HHucwQvuw35j9F8BtH4TBrBAj5hw25XF2C40\nWEJ9eed3/AV/1F94Vk5bvYfn5vPp1LUj4QkLryrDSVg/EJSs9ez19EeWEPHyWbc9\n4MfDmXKVqtzJ/46Hy12aaMv+PB/1JikLiOW91WLihU/0Ez6v+c+pXGIMfDwgfSAk\npT1PekCG4aPBev6/BCVxHrz45NCtXlKiQinPJQIDAQABAoIBAH1VwbnnJBd3hLOd\nHyER6pFJFYmy57iTjpwbHryEnVUufh54cD76uVD4dCLLhJLiSvroU13UMw/wvUAg\n8CuhRjo/Rz58hoOEHzn/eoWkVGExSr2WZcQBZ7/LSWkhJ+InCxNsWazzdZwMwt/c\nfYGYa+YKiaLWFHdXNQwIbtqfFGFiAFy3b3Wsu2tjRIvhJ8pOwgiqJ6+qale52xfI\nhFefh3u0XZcoV5gtDWa09gDMF9Ba39dyQ2j0cKDxaH6xrF53I3DIGPGIynrsP1qh\nRtAXY161V2L/COEiq2vGTV/EviOJ6N/2kmkXIisTrNMzTCC7Jh1Y1bK4ODhkIm/F\nrpc5Q1kCgYEAzPxG2Fd4tCQLyxWBWKCbYfCM6ufh5TtCN0AnoZyd3E5aLPJYpd/M\nXziIGsco0B/jxIboAB8LKgKWP1ruMn6mX74U2VTDYhJ0soLrSvSJY/nVuL0ymtIL\n/h6UpWyEEPNdC0Ipcu5dUngurhdsV8LaRaTGMpA78nOnnHWXofBg91sCgYEA7bbH\n7efrTBHGjpd9GIFbQDkk3/tspUXJ9KHLvMIissgqzxo0iIST1F4YpXeXz6HbGem4\nH8elaEi+pMiIkxzkZV4273VuRtXIYs8Wr5HSD8+QZtKNijryt9hlhN4wN0JA81uk\nSAD4q7wwVtI2X3TT4rDN4uf5fdez+36H4AHRm38CgYA8hpUIljNexXHyAiSSHcIj\nlhqV1egefnPbyoapMoxuG3iG4vwH5l/7Eb8mYP4NDg173vWr636pZeAlTt0cbccE\naCTR0zRpxddNSljdZf0XVxKjHMJPcov1+eOcQMFyG9myVFPWyskla7Uk1Ge6Nh+r\nBq87CNmaiknIafRe7ZJEFwKBgQCzRPTh5dT9OSqUvooIwQUgGfhFMkdtHISBiMMt\nRvsD+RDPvuN/UPxrW8safmZun5GsqSXCUb3cN4AOpWzaBR/5kmO7ksPnh7HnUmW5\nYi8Y3V/5KzCy3mHNY9SrrySNh9mTrbjm1FS0rueFkmKO+nwQqWWbiXYOAW4qa/Hs\nbXK14QKBgB99AMe16k3sj0gqJe5CciKsUxcF1IvZ9zSoOmGguRD639aptGzEVADf\nPplcZXbYB/XAzFVU+ltK3XCchVTG8jN0RJf6UKvSJrJ1nl4MKZ5ukNjB8qEfRiFF\n/FPezNb5uusgW50oggf84dp0Ler0cj7VTTS9YIzd7FGalEyIIKck\n-----END RSA PRIVATE KEY-----\n",
+        "config": "",
+        "name": "kube-etcd-192-168-125-10",
+        "commonName": "system:kube-etcd-192-168-125-10",
+        "ouName": "",
+        "envName": "KUBE_ETCD_192_168_125_10",
+        "path": "/etc/kubernetes/ssl/kube-etcd-192-168-125-10.pem",
+        "keyEnvName": "KUBE_ETCD_192_168_125_10_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-etcd-192-168-125-10-key.pem",
+        "configEnvName": "",
+        "configPath": ""
+      },
+      "kube-node": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDCTCCAfGgAwIBAgIIB0kTXe4qRWEwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDlaMC0xFTAT\nBgNVBAoTDHN5c3RlbTpub2RlczEUMBIGA1UEAxMLc3lzdGVtOm5vZGUwggEiMA0G\nCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDIZxQZdja532+9BxvkSDDku/d5Wo2S\nrpRE5FIfhs8tjgqom+8e3w8PelJqhMf/nM5SD41hwBevg58YljJU4KS/csSwa/CY\nVpQNkAXaXO4gWZYGS9S3HPeGTgPiDGtKpc5Fvq6JIjPsjWVIXlRTGs64lybQvaB4\n04lpKnIwFdDqRtzBfdSNgolarFGT5szsmPY2Xf03833xKKh4G44Q9PEFhyKbS+9u\nBV09TPjD35KvsaRHZkjpHNz+ab0Vl7FhuWVSiKZ4wjRMPQniIgTCO8nxDmJ8SM8a\njh6eOA6Xotnjh1rRVKSFtJMfFzN1n3RAFgSbOEuNLqzgLca5wQi1n5+NAgMBAAGj\nSDBGMA4GA1UdDwEB/wQEAwIFoDATBgNVHSUEDDAKBggrBgEFBQcDAjAfBgNVHSME\nGDAWgBRfiAgHZAHpRcmMBO1X5wzdTp+dmTANBgkqhkiG9w0BAQsFAAOCAQEAY9VY\n71cf1rrIKKnwdSV12s19jw23oQW8iRWFV9FddFw9YFxgv+TuWiYRgqTpLuX/ohfQ\nlYg/U9CcvHGr4y9HrtCuMdIE953JBPeKrDb7DuUVrGqlhRc2Kl0KxTu+nRXUmVPR\nRbdEheLOqFAwoEcwOHgFad+BblBwwfZJ1e/Cf0Q/KUj97Pc5IUY8QMOqlZrILxWE\nikov/Sl6F8ka/o/M0VdvOSPceCp2KcSV4rOmjlisxUOqqhacO1tEZYuqiywkNXMG\n+ZHZlfWivvwQK9Glw4OLDZVwCMeR1eqsKrYgxosp4L/usLsGNYcZFDG0U1Na/aed\nunbFsbxjTxKqg7MoEw==\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAyGcUGXY2ud9vvQcb5Egw5Lv3eVqNkq6URORSH4bPLY4KqJvv\nHt8PD3pSaoTH/5zOUg+NYcAXr4OfGJYyVOCkv3LEsGvwmFaUDZAF2lzuIFmWBkvU\ntxz3hk4D4gxrSqXORb6uiSIz7I1lSF5UUxrOuJcm0L2geNOJaSpyMBXQ6kbcwX3U\njYKJWqxRk+bM7Jj2Nl39N/N98SioeBuOEPTxBYcim0vvbgVdPUz4w9+Sr7GkR2ZI\n6Rzc/mm9FZexYbllUoimeMI0TD0J4iIEwjvJ8Q5ifEjPGo4enjgOl6LZ44da0VSk\nhbSTHxczdZ90QBYEmzhLjS6s4C3GucEItZ+fjQIDAQABAoIBABBlbp2OsHeQsmGy\n3TNWPLnaLys8n2yq3/KrA5UUwIqnnnOhHnVWJrNLfMa+Sma9e5v3LcgboVR43mFy\nmHedUZ1gVHtiuXKdUsuxRulQxSLccYveVG8O7amNZH/wKC8ZVcEbEsihhcIK54h+\nP0P1Y4hyxXg6q5B3Ljzufh01C7y/HkbMyfKG5pgePhtWI9WoENbGu04kcjPWDjlE\nMkdzL5jS/YXu2l4oE3uTLZ0mV9wzOhdfwk3qp1rHo73rHnAbF65X0gEuK62u6fFg\nqmYEyTf98FpN2Ej84iZPeOCDaKSECNzIJMSTL1XTCOeuNwUMs+6XscEWlcZBh99O\n6eEQ1QECgYEAzzhlBvIhydMeSyz4s3bYe9ihrtqCgX4lNdANa8W0lQVcHIkeQ64Q\nvtMZ6j3M5dS5o7SOOVC7AhEPQmW/tiM+Bv2vbDXTSt+x+92EZDULwRk63peyXbY/\nBZWkp4Mr4xWukpWdpNz2p0i6rgrYibKBCK2qqe2hzqjGpL5jOtLzauECgYEA95PW\nBbC5+YlssHvs5c+0hLvn8I4mxsWxU49mSjlrwYCqSn2ttEuhqHUmG/jBLUJUOoFg\nht+qRNlZZ2tvHrTobK5wXdSKzPnV1ref1YOVGI+tr50/51+reYN8PPiRpSqgqmcE\nji/DLWN5IeLAGm1SGLP+GSKjK7Yln2lUY8z2li0CgYAL22g8e4JfcAsdthcM/dHp\nVD38KViqXDN43szFy+xHUqUwpM/sg3tF0AJ9msespv1wVpaExQ/OUHeVDwlnPKEB\n+WYeRP4wHJislsJKkZZ4mB78OaXlItZ8VVG0nBbYyZbRoGoC0vnyHIFCEDDPwD0N\n6BIJ4yUNFC85ogM/jG6NQQKBgQDle3/3eE96MNqxX70/a16NZktgW7MvrhFnPdV3\n2W+7RhMSxxnas/wdVLFFXjdZR1Ehhci+W9XMyZaoWRn/4XpLOwnmv1sFElMXGs+p\nrrTltlAtJtoUEka0dJ8VOOZvrWqNaL39OeJ1UO337eFY3ZoqUbSnAcczfjuzXoOd\nml+65QKBgQC+BgOeZX88dyZF1rrHsi3x8G/l4CtgbPAcEWs5ITic2Mt7tLyPJIQb\n7pL1GA/oK+KNWIV7NroPpAQmhY7mVQ4KnQPRPZ2jvAe9kFEz7E1ay1d92idRklBC\ndlpjSs5+/2lGOe+LjD2k4USCUErG6AfrE7P7MtxwhOwE/ghpGev3Bw==\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-node-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-node-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-node.pem\n    client-key: /etc/kubernetes/ssl/kube-node-key.pem",
+        "name": "kube-node",
+        "commonName": "system:node",
+        "ouName": "system:nodes",
+        "envName": "KUBE_NODE",
+        "path": "/etc/kubernetes/ssl/kube-node.pem",
+        "keyEnvName": "KUBE_NODE_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-node-key.pem",
+        "configEnvName": "KUBECFG_KUBE_NODE",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-node.yaml"
+      },
+      "kube-proxy": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIC+DCCAeCgAwIBAgIIVZzm7ULA0tYwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDlaMBwxGjAY\nBgNVBAMTEXN5c3RlbTprdWJlLXByb3h5MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\nMIIBCgKCAQEAyGcUGXY2ud9vvQcb5Egw5Lv3eVqNkq6URORSH4bPLY4KqJvvHt8P\nD3pSaoTH/5zOUg+NYcAXr4OfGJYyVOCkv3LEsGvwmFaUDZAF2lzuIFmWBkvUtxz3\nhk4D4gxrSqXORb6uiSIz7I1lSF5UUxrOuJcm0L2geNOJaSpyMBXQ6kbcwX3UjYKJ\nWqxRk+bM7Jj2Nl39N/N98SioeBuOEPTxBYcim0vvbgVdPUz4w9+Sr7GkR2ZI6Rzc\n/mm9FZexYbllUoimeMI0TD0J4iIEwjvJ8Q5ifEjPGo4enjgOl6LZ44da0VSkhbST\nHxczdZ90QBYEmzhLjS6s4C3GucEItZ+fjQIDAQABo0gwRjAOBgNVHQ8BAf8EBAMC\nBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHwYDVR0jBBgwFoAUX4gIB2QB6UXJjATt\nV+cM3U6fnZkwDQYJKoZIhvcNAQELBQADggEBAHbAmJ/gHrl8AIkCqdXMI0JyZIqR\nAVCL+gk8hAXNLEVJLoJT0HYP7H6wcp5wBf3i7MHy4IiXidZOuAFNWcsJmXPpkwIX\nZuoy11DOU/toj+B5DiRiak5xAhhmILmmSYUszLCCb7pvkiafNWf1gM03Oc110SLW\nOF97A1EEY+5Z40YBwNUTzPEWKrHgaoVuQSTlTqOkVFmHl0bWpGHEi8tsCrWTnC4d\neBHozlHT2KcKcHJY1v0FtjABb80rJwTgcet9CvRCA+kxtC36emJoPeTaZPpDyL7N\nlx8MxHBxMLZOZSCxoZuILX5uNoU2RybVyaAkCSRnOT6Ffsm/8Grea5Oz/nc=\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAyGcUGXY2ud9vvQcb5Egw5Lv3eVqNkq6URORSH4bPLY4KqJvv\nHt8PD3pSaoTH/5zOUg+NYcAXr4OfGJYyVOCkv3LEsGvwmFaUDZAF2lzuIFmWBkvU\ntxz3hk4D4gxrSqXORb6uiSIz7I1lSF5UUxrOuJcm0L2geNOJaSpyMBXQ6kbcwX3U\njYKJWqxRk+bM7Jj2Nl39N/N98SioeBuOEPTxBYcim0vvbgVdPUz4w9+Sr7GkR2ZI\n6Rzc/mm9FZexYbllUoimeMI0TD0J4iIEwjvJ8Q5ifEjPGo4enjgOl6LZ44da0VSk\nhbSTHxczdZ90QBYEmzhLjS6s4C3GucEItZ+fjQIDAQABAoIBABBlbp2OsHeQsmGy\n3TNWPLnaLys8n2yq3/KrA5UUwIqnnnOhHnVWJrNLfMa+Sma9e5v3LcgboVR43mFy\nmHedUZ1gVHtiuXKdUsuxRulQxSLccYveVG8O7amNZH/wKC8ZVcEbEsihhcIK54h+\nP0P1Y4hyxXg6q5B3Ljzufh01C7y/HkbMyfKG5pgePhtWI9WoENbGu04kcjPWDjlE\nMkdzL5jS/YXu2l4oE3uTLZ0mV9wzOhdfwk3qp1rHo73rHnAbF65X0gEuK62u6fFg\nqmYEyTf98FpN2Ej84iZPeOCDaKSECNzIJMSTL1XTCOeuNwUMs+6XscEWlcZBh99O\n6eEQ1QECgYEAzzhlBvIhydMeSyz4s3bYe9ihrtqCgX4lNdANa8W0lQVcHIkeQ64Q\nvtMZ6j3M5dS5o7SOOVC7AhEPQmW/tiM+Bv2vbDXTSt+x+92EZDULwRk63peyXbY/\nBZWkp4Mr4xWukpWdpNz2p0i6rgrYibKBCK2qqe2hzqjGpL5jOtLzauECgYEA95PW\nBbC5+YlssHvs5c+0hLvn8I4mxsWxU49mSjlrwYCqSn2ttEuhqHUmG/jBLUJUOoFg\nht+qRNlZZ2tvHrTobK5wXdSKzPnV1ref1YOVGI+tr50/51+reYN8PPiRpSqgqmcE\nji/DLWN5IeLAGm1SGLP+GSKjK7Yln2lUY8z2li0CgYAL22g8e4JfcAsdthcM/dHp\nVD38KViqXDN43szFy+xHUqUwpM/sg3tF0AJ9msespv1wVpaExQ/OUHeVDwlnPKEB\n+WYeRP4wHJislsJKkZZ4mB78OaXlItZ8VVG0nBbYyZbRoGoC0vnyHIFCEDDPwD0N\n6BIJ4yUNFC85ogM/jG6NQQKBgQDle3/3eE96MNqxX70/a16NZktgW7MvrhFnPdV3\n2W+7RhMSxxnas/wdVLFFXjdZR1Ehhci+W9XMyZaoWRn/4XpLOwnmv1sFElMXGs+p\nrrTltlAtJtoUEka0dJ8VOOZvrWqNaL39OeJ1UO337eFY3ZoqUbSnAcczfjuzXoOd\nml+65QKBgQC+BgOeZX88dyZF1rrHsi3x8G/l4CtgbPAcEWs5ITic2Mt7tLyPJIQb\n7pL1GA/oK+KNWIV7NroPpAQmhY7mVQ4KnQPRPZ2jvAe9kFEz7E1ay1d92idRklBC\ndlpjSs5+/2lGOe+LjD2k4USCUErG6AfrE7P7MtxwhOwE/ghpGev3Bw==\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-proxy-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-proxy-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-proxy.pem\n    client-key: /etc/kubernetes/ssl/kube-proxy-key.pem",
+        "name": "kube-proxy",
+        "commonName": "system:kube-proxy",
+        "ouName": "",
+        "envName": "KUBE_PROXY",
+        "path": "/etc/kubernetes/ssl/kube-proxy.pem",
+        "keyEnvName": "KUBE_PROXY_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-proxy-key.pem",
+        "configEnvName": "KUBECFG_KUBE_PROXY",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-proxy.yaml"
+      },
+      "kube-scheduler": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIC/DCCAeSgAwIBAgIIVxdc64QPXhMwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDlaMCAxHjAc\nBgNVBAMTFXN5c3RlbTprdWJlLXNjaGVkdWxlcjCCASIwDQYJKoZIhvcNAQEBBQAD\nggEPADCCAQoCggEBALA+c57+j9TOvxCpx+mEeLKRHjJ5fZFWMirLOjyvKk0+gxTd\nqpWQa3QNtKHcVjuKEnH6xL+TG+fnvgXfOMr022SlFFeik2dEU17c8d9hg1Q8qasu\nLYQEg9uKhD19q9nc5B3EvhHX8bTnfASdGHvKbqjAmjWjjj/pefDVKOoQxObE9CmW\n2rxoI3a6VTvn+iA502ZRUvaMBoiX9Qu64Yuk2aRDndHWfJKWNXR1whJIrhsDhQk1\nI9ktO1fk7CJoNssc4E/45oC0RvSFfBuXqO6t3mnx2MtdGSqbED+JU5XGv4v7Yk0a\noi4JA9b0MwgTZ9cGtK0CuDcY9pNzE/xIPqtVbqkCAwEAAaNIMEYwDgYDVR0PAQH/\nBAQDAgWgMBMGA1UdJQQMMAoGCCsGAQUFBwMCMB8GA1UdIwQYMBaAFF+ICAdkAelF\nyYwE7VfnDN1On52ZMA0GCSqGSIb3DQEBCwUAA4IBAQCpGmqna2Mz0J6EPzYbIEKQ\noHQzM5ZPxfp/Of3Wgdxb3cQmhSOE/Fd1OllFiEVLHv8l75Psg/dCEv3H+AtgLcze\nzwB2K2ar2vdQyGWTYe7dvldHIidKdAWE18bSZTBfT6vTdXLgRoyYM3SEohLwsYdS\nECBHC9so4Zn48OYDHNAnqRb/EKr847TQqs1KodKjIr8fh14d5z1sBvHjJoa1ZzxL\n+oOmESllOhh6lo7Bg5Z0oI69YXxNAtQv5KIydLCsQOv0vNU5frULlv3pP0/CFxPj\n9jma9a4krAL2wTt7iWe1KuN4hUpuIu1y1P6+zAZKPwPICOnqTXS1jwNikygsUh/1\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpQIBAAKCAQEAsD5znv6P1M6/EKnH6YR4spEeMnl9kVYyKss6PK8qTT6DFN2q\nlZBrdA20odxWO4oScfrEv5Mb5+e+Bd84yvTbZKUUV6KTZ0RTXtzx32GDVDypqy4t\nhASD24qEPX2r2dzkHcS+EdfxtOd8BJ0Ye8puqMCaNaOOP+l58NUo6hDE5sT0KZba\nvGgjdrpVO+f6IDnTZlFS9owGiJf1C7rhi6TZpEOd0dZ8kpY1dHXCEkiuGwOFCTUj\n2S07V+TsImg2yxzgT/jmgLRG9IV8G5eo7q3eafHYy10ZKpsQP4lTlca/i/tiTRqi\nLgkD1vQzCBNn1wa0rQK4Nxj2k3MT/Eg+q1VuqQIDAQABAoIBACpIYV7UvdcVXtt1\nkCOjB333uOHtKcXzgwenSCqE78YmaDZaU/Gb+1uVai+m9/1Cy9gSjJ9VgM1rWLh5\n7Fss0XHc9PttYqXUy5entFOeRm6wOxh5dKwGlUfXfJBwFQmoqAXITL1lLHT1UFif\nA9+3GkNcKeMSgS8uKXYw/abiLQsb8V3zFl+n/fLU0H0oNb5qYpmE5tQdDB8NrxOl\nkPL5rnaCoSrudjexbv8Jvv9KsETlJMBGvS76oVnPeN97n9D7c4lVXbCErRczNX+/\nTf7gfvCBzSPxrwUhfUkIwYd9mxSFkc64SiV12C9VnrCoj2yE8CK9iBa4XGT0H2RU\nQGQqgAECgYEA3i0UVxmcWC2cxRsZIUT2LwGzQgaFIL3goMgnZNflI8BZGYqDeCxf\nCnL3jbbzawgXtVFe9opq/Zl6hbEANscVo7z8/iuAYDYBXytn2EwXhRivPAg4FPpg\nPGt/huKltvjQ//THHeWnq54VQa9OP4ijcbA621taA+ktTV94JaCv3qkCgYEAyxM/\niqQskFDFljfRtt20VCx8Uw7d6Y0kJ7Yb0maxV77O5EBL6nWwYBfmqyHpd4IizRLY\nJ+gawqlyi9fcKplpADiB14gkjcxd+DDUO8yq/0+nC3NdwmFLisunBkjjN9r5b3rT\nchVrCcHBfQpvFw/5MNrKIPHychT96xOcfSLDEAECgYEA2MI8XPnkmfbuQzM74kSI\ntrW+8QSxb48wj0yXeoBT0vx/MTb9KwqHMweVU9KRS/QaRVD9CCVlWsQZUEOuxMKY\n7yWb4lIIrlUiI3qSlukt7TF3DWerZ3Qa3fe29J89M/Uu2vkyJo3/dqUFcg8ZlUy2\nwV1BHu/SM4yUIS+qZXOPAfkCgYEAl2I+8QRX8DE2SjhMTozRfBo5h9VCWnOL60qX\nTO6e73FfW8oOjba0B75ph1NdbmiFtuiAWKdvI4QbzuHYz6zTGIYHTPvBfC9IMdd8\nryNwqajgNuoGj/vly47rcQTu1VmYrqEadSZAR+K3cZZQoBmZQvEm0w5qFN9PNmnF\nM4excAECgYEAjmWAOPwbWPihynjHdNgJb2+NFijMOmRsVJ7PjOVFeWvNAPdCMqEE\n/mAuFN5xLznB0XLYvmyEQt+l4+0MvEaBMXpxYTLOGw58LvfAyDJHCqzBa2n2ri24\nAwDYdrEhIVLMlCFQxuQARrYLwVIQfln2y/WkTvPP0ZltZ+yEkvuay9M=\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-scheduler-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-scheduler-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-scheduler.pem\n    client-key: /etc/kubernetes/ssl/kube-scheduler-key.pem",
+        "name": "kube-scheduler",
+        "commonName": "system:kube-scheduler",
+        "ouName": "",
+        "envName": "KUBE_SCHEDULER",
+        "path": "/etc/kubernetes/ssl/kube-scheduler.pem",
+        "keyEnvName": "KUBE_SCHEDULER_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-scheduler-key.pem",
+        "configEnvName": "KUBECFG_KUBE_SCHEDULER",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-scheduler.yaml"
+      },
+      "kube-service-account-token": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDnTCCAoWgAwIBAgIIV2L0UBiPIdcwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDhaMBkxFzAV\nBgNVBAMTDmt1YmUtYXBpc2VydmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEA2fvyym/4g5BC9mvIUtQ+25PxDVMyrZnGmDZwuTI8OU2zRqL2FS/alKAl\nFJNdkQ9ZSmxEac/h/drEYWZfLzUBUlzi6u0iO+GhQpVPjQRuh3VYikCGuPCYGipF\n5LXAMnaWf/VLbXnqHIfNUpGNuvXe4QULKMUJiY4Yr9apP/HVkmRRvRxZxpXLPGVf\nYhgbi9aijIqBA7QZWjntm0YRE6zM7HsPXbXvClo+yBr4g3VSxMzt6z4flBpu1YZp\nnyJZoJBxQrXRZFmn7DvSjD+pBlh5yXi7y1A/Nb8AyiZE2S1BWRGuKxiq46nwPjCM\nd4sHLvvRVEEQhb/tud8LAA9unoyZ4QIDAQABo4HvMIHsMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwHwYDVR0jBBgwFoAUX4gI\nB2QB6UXJjATtV+cM3U6fnZkwgZkGA1UdEQSBkTCBjoIRc3dhZ2dlci1ub2RlLTAx\nLW2CCWxvY2FsaG9zdIIKa3ViZXJuZXRlc4ISa3ViZXJuZXRlcy5kZWZhdWx0ghZr\ndWJlcm5ldGVzLmRlZmF1bHQuc3ZjgiRrdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNs\ndXN0ZXIubG9jYWyHBMCofQqHBH8AAAGHBAorAAEwDQYJKoZIhvcNAQELBQADggEB\nAIbz39J/GTZ34oNWSMIvxntVFL90zbB7uDI9cZQvlzjY/ujMJKksIooAKX05P52i\nuzmUtZplFqGvN7/5eF/fhTMA/Ov2h2Ig7cPejujPIo89w1GsYGaAEa7EEXH6bxD1\nIDCy2l5BHOzOm42ARI+bwU5qt7vh2pVqWU9fgesodI720Ex9ZppUqjxwJ13J2edH\n9gmjG2B0G7FyfSjM/tEJkwppdMPJ86IRXhiROYCN7FV37rpMLIKpEBPXgj5m7U8U\nAtDDAlxk1NKwCA77VCLLafqCERxeK7tjvn+j9dnvDS5tdsVBKbVk11iPdmdfNNby\nx9Bd0BOqXYYfNIqmHfM2zGg=\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA2fvyym/4g5BC9mvIUtQ+25PxDVMyrZnGmDZwuTI8OU2zRqL2\nFS/alKAlFJNdkQ9ZSmxEac/h/drEYWZfLzUBUlzi6u0iO+GhQpVPjQRuh3VYikCG\nuPCYGipF5LXAMnaWf/VLbXnqHIfNUpGNuvXe4QULKMUJiY4Yr9apP/HVkmRRvRxZ\nxpXLPGVfYhgbi9aijIqBA7QZWjntm0YRE6zM7HsPXbXvClo+yBr4g3VSxMzt6z4f\nlBpu1YZpnyJZoJBxQrXRZFmn7DvSjD+pBlh5yXi7y1A/Nb8AyiZE2S1BWRGuKxiq\n46nwPjCMd4sHLvvRVEEQhb/tud8LAA9unoyZ4QIDAQABAoIBADJBIJ9FIzEJoDZ5\ncMyPvBIZUFh3Ftbo/dz3qBM6HqJDZJJjXYJS7vyW0xWkR8z6keZTgY43a+1/cwjV\ndhpHCQ/49COfGeZeRTQ5ggaLwAOgrRHqgGTAqwBVQJnSwQWhS18iqQoLMkrzkAV6\nIwe4SXLtG76Bdops5Qoc3hYs5cUCyNjT6oq0ghloNo8hKS4Q6ELet4kmzvoEbRnf\n9Z41B6GmIS6IAdPjLVs/kUcRJBMNeR1ibRW/13PTjpNJRHphIAgYy+xHUHAUp+yg\nW9AFtn5AWPkTzAC+1tXixLovy1hixqs4ZqPaOvXkCDYa/BrjB/yS4BYwt+nsGvW+\npPZd7tUCgYEA8HJB1/lmTMYbqCJx/OjOvXQBAFj2lMCCnLhhE9mgIzxb0AL2gJfp\nsbe9LduKdh8UoZU6V1EXKGVSAMcPueZjPl4d6DiuWh5XNxiGBZBww3Yu2lx18st4\nLBckEoQu3EOlEDDlkYagwZCOLvFC3VFMTsGwgiX83m2RxW5vf1sNJB8CgYEA6BW4\n/IeuqJoinFYjQmryPEqFXIuo9pl9Lj+kdbWf7AKs0EuY2EuN2/Z6WXqwIhh8d7sX\nPhE3iuVV1RUBIBBKVbDzz/C8SUG3rEFY4imDxTx8O6Zyyf3S4FgYouwwZzcsfB/L\n0EgYiU6mG636L4+og7bk2yTnRC9YUikSpbp+gf8CgYEAu7Akj4cBgMpfilYg7k94\nGdC0e2X2TNUc32LZfFozM24JKQ03B9gNNol7ZZFqupu2Sg8ndEM7NXApm6vHLdCW\nBXgIFl4wUu4+HCbLbwp5y0m0dwUXmMeU7a2+namKvqsa7NGOUZNqZs4E/sWa8RFl\n5FAzDNTEV4fl8twqspoLXvcCgYB21piwhnGC19odH2ZSnhyHjskXCFRuYU3eHqyB\nsYy/9uayieMr7hQnq+AebVo/OzaQwHY4S+ya7K+0ulqnJnBJzKAru+NNx57bT2LJ\n++QDXONoT+S7VYNjaPjEhBiM4Y2fyVA9yIz30hPwXHedXvw05bPuGslo+q1I9Msd\nnY8l1QKBgCsLe48ySloqc9e5nTN2kf37rCsFh6Iq4kv9bxg8Y7/8wXoH567WSKA5\nGtQe4O56EOeiczM9MVKen5WKxauRGYbZRwJGp/chKA6QvJMqvoRH0L++jUBPKDsn\nAeklpwot4vavM2G6OHa+MD/0+1n5wCJDWbGEtPrQ7g9ZazcSjaGo\n-----END RSA PRIVATE KEY-----\n",
+        "config": "",
+        "name": "kube-service-account-token",
+        "commonName": "kube-service-account-token",
+        "ouName": "",
+        "envName": "KUBE_SERVICE_ACCOUNT_TOKEN",
+        "path": "/etc/kubernetes/ssl/kube-service-account-token.pem",
+        "keyEnvName": "KUBE_SERVICE_ACCOUNT_TOKEN_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-service-account-token-key.pem",
+        "configEnvName": "",
+        "configPath": ""
+      }
+    }
+  },
+  "currentState": {
+    "rkeConfig": {
+      "nodes": [
+        {
+          "address": "192.168.125.10",
+          "port": "22",
+          "internalAddress": "192.168.125.10",
+          "role": [
+            "controlplane",
+            "worker",
+            "etcd"
+          ],
+          "hostnameOverride": "swagger-node-01-m",
+          "user": "swagger",
+          "dockerSocket": "/var/run/docker.sock",
+          "sshKeyPath": "~/.ssh/id_ed25519_toSwagger"
+        },
+        {
+          "address": "192.168.125.11",
+          "port": "22",
+          "internalAddress": "192.168.125.11",
+          "role": [
+            "worker"
+          ],
+          "hostnameOverride": "swagger-node-02",
+          "user": "swagger",
+          "dockerSocket": "/var/run/docker.sock",
+          "sshKeyPath": "~/.ssh/id_ed25519_toSwagger"
+        }
+      ],
+      "services": {
+        "etcd": {
+          "image": "rancher/mirrored-coreos-etcd:v3.4.16-rancher1",
+          "extraArgs": {
+            "election-timeout": "5000",
+            "heartbeat-interval": "500"
+          },
+          "snapshot": true,
+          "retention": "72h",
+          "creation": "12h"
+        },
+        "kubeApi": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1",
+          "extraEnv": [
+            "RKE_AUDITLOG_CONFIG_CHECKSUM=856f426399fb14a50b78e721d15c168c",
+            "RKE_AUDITLOG_CONFIG_CHECKSUM=856f426399fb14a50b78e721d15c168c"
+          ],
+          "serviceClusterIpRange": "10.43.0.0/16",
+          "serviceNodePortRange": "30000-32767",
+          "auditLog": {
+            "enabled": true,
+            "configuration": {
+              "maxAge": 30,
+              "maxBackup": 10,
+              "maxSize": 100,
+              "path": "/var/log/kube-audit/audit-log.json",
+              "format": "json",
+              "policy": {
+                "kind": "Policy",
+                "apiVersion": "audit.k8s.io/v1",
+                "metadata": {
+                  "creationTimestamp": null
+                },
+                "rules": [
+                  {
+                    "level": "Metadata"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "kubeController": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1",
+          "clusterCidr": "10.42.0.0/16",
+          "serviceClusterIpRange": "10.43.0.0/16"
+        },
+        "scheduler": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1"
+        },
+        "kubelet": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1",
+          "clusterDomain": "cluster.local",
+          "infraContainerImage": "rancher/mirrored-pause:3.4.1",
+          "clusterDnsServer": "10.43.0.10"
+        },
+        "kubeproxy": {
+          "image": "rancher/hyperkube:v1.21.8-rancher1"
+        }
+      },
+      "network": {
+        "plugin": "calico",
+        "options": {
+          "calico_cloud_provider": "none",
+          "calico_flex_volume_plugin_dir": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/nodeagent~uds"
+        },
+        "updateStrategy": {
+          "strategy": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": 1
+          }
+        }
+      },
+      "authentication": {
+        "strategy": "x509"
+      },
+      "systemImages": {
+        "etcd": "rancher/mirrored-coreos-etcd:v3.4.16-rancher1",
+        "alpine": "rancher/rke-tools:v0.1.78",
+        "nginxProxy": "rancher/rke-tools:v0.1.78",
+        "certDownloader": "rancher/rke-tools:v0.1.78",
+        "kubernetesServicesSidecar": "rancher/rke-tools:v0.1.78",
+        "kubedns": "rancher/mirrored-k8s-dns-kube-dns:1.17.4",
+        "dnsmasq": "rancher/mirrored-k8s-dns-dnsmasq-nanny:1.17.4",
+        "kubednsSidecar": "rancher/mirrored-k8s-dns-sidecar:1.17.4",
+        "kubednsAutoscaler": "rancher/mirrored-cluster-proportional-autoscaler:1.8.3",
+        "coredns": "rancher/mirrored-coredns-coredns:1.8.4",
+        "corednsAutoscaler": "rancher/mirrored-cluster-proportional-autoscaler:1.8.3",
+        "nodelocal": "rancher/mirrored-k8s-dns-node-cache:1.18.0",
+        "kubernetes": "rancher/hyperkube:v1.21.8-rancher1",
+        "flannel": "rancher/mirrored-coreos-flannel:v0.15.1",
+        "flannelCni": "rancher/flannel-cni:v0.3.0-rancher6",
+        "calicoNode": "rancher/mirrored-calico-node:v3.19.2",
+        "calicoCni": "rancher/mirrored-calico-cni:v3.19.2",
+        "calicoControllers": "rancher/mirrored-calico-kube-controllers:v3.19.2",
+        "calicoCtl": "rancher/mirrored-calico-ctl:v3.19.2",
+        "calicoFlexVol": "rancher/mirrored-calico-pod2daemon-flexvol:v3.19.2",
+        "canalNode": "rancher/mirrored-calico-node:v3.19.2",
+        "canalCni": "rancher/mirrored-calico-cni:v3.19.2",
+        "canalControllers": "rancher/mirrored-calico-kube-controllers:v3.19.2",
+        "canalFlannel": "rancher/mirrored-coreos-flannel:v0.15.1",
+        "canalFlexVol": "rancher/mirrored-calico-pod2daemon-flexvol:v3.19.2",
+        "weaveNode": "weaveworks/weave-kube:2.8.1",
+        "weaveCni": "weaveworks/weave-npc:2.8.1",
+        "podInfraContainer": "rancher/mirrored-pause:3.4.1",
+        "ingress": "rancher/nginx-ingress-controller:nginx-0.49.3-rancher1",
+        "ingressBackend": "rancher/mirrored-nginx-ingress-controller-defaultbackend:1.5-rancher1",
+        "ingressWebhook": "rancher/mirrored-ingress-nginx-kube-webhook-certgen:v1.1.1",
+        "metricsServer": "rancher/mirrored-metrics-server:v0.5.0",
+        "windowsPodInfraContainer": "rancher/kubelet-pause:v0.1.6",
+        "aciCniDeployContainer": "noiro/cnideploy:5.1.1.0.1ae238a",
+        "aciHostContainer": "noiro/aci-containers-host:5.1.1.0.1ae238a",
+        "aciOpflexContainer": "noiro/opflex:5.1.1.0.1ae238a",
+        "aciMcastContainer": "noiro/opflex:5.1.1.0.1ae238a",
+        "aciOvsContainer": "noiro/openvswitch:5.1.1.0.1ae238a",
+        "aciControllerContainer": "noiro/aci-containers-controller:5.1.1.0.1ae238a",
+        "aciGbpServerContainer": "noiro/gbp-server:5.1.1.0.1ae238a",
+        "aciOpflexServerContainer": "noiro/opflex-server:5.1.1.0.1ae238a"
+      },
+      "sshKeyPath": "~/.ssh/id_ed25519_toSwagger",
+      "sshAgentAuth": false,
+      "authorization": {
+        "mode": "rbac"
+      },
+      "ignoreDockerVersion": false,
+      "enableCriDockerd": null,
+      "kubernetesVersion": "v1.21.8-rancher1-1",
+      "ingress": {
+        "provider": "nginx",
+        "updateStrategy": {
+          "strategy": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": 1
+          }
+        },
+        "httpPort": 80,
+        "httpsPort": 443,
+        "networkMode": "hostPort",
+        "defaultBackend": true,
+        "defaultIngressClass": true
+      },
+      "clusterName": "swagger-cluster",
+      "cloudProvider": {},
+      "prefixPath": "/",
+      "addonJobTimeout": 45,
+      "bastionHost": {},
+      "monitoring": {
+        "provider": "metrics-server",
+        "updateStrategy": {
+          "strategy": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          }
+        },
+        "replicas": 1
+      },
+      "restore": {},
+      "rotateEncryptionKey": false,
+      "dns": {
+        "provider": "coredns",
+        "updateStrategy": {
+          "strategy": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": 1,
+            "maxSurge": 0
+          }
+        },
+        "linearAutoscalerParams": {
+          "coresPerReplica": 128,
+          "nodesPerReplica": 4,
+          "min": 1,
+          "preventSinglePointFailure": true
+        }
+      },
+      "upgradeStrategy": {
+        "maxUnavailableWorker": "10%",
+        "maxUnavailableControlplane": "1",
+        "nodeDrainInput": {
+          "ignoreDaemonSets": true,
+          "gracePeriod": -1,
+          "timeout": 120
+        }
+      }
+    },
+    "certificatesBundle": {
+      "kube-admin": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDCjCCAfKgAwIBAgIID28eAyc3TUMwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NTBaMC4xFzAV\nBgNVBAoTDnN5c3RlbTptYXN0ZXJzMRMwEQYDVQQDEwprdWJlLWFkbWluMIIBIjAN\nBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnQdx/5T2htdh7hAU4NiYIjF9kNsx\n2erCPCP0F3GkVViqwoEHYnMOKFagyzdFlnliQ4eUxPRp0fPqn1JxyszUtSMMubNH\nzXQXk0SjBAu9dS/6VtaAYrUFUTpZU6cYUNVPZ4gN5yjA20GuUYjf+TWCt078dOPG\n/MyR+WvY8h1VfWSCDcEOXrtfpq5E9D09rqgYXjXAN9dykhdET26CRI+yWbN32cIG\ngzwjJh1KILYc/TCfjbOEr+YQDzmvYuBOvOILpDSPByM49Fh8q87jte9T7ydlG1RW\n1l7GADE+oB0VkQxL9uZqHxRqPte2qtQMwCM3EYhNq2LOoAaWFzx+/9/JfwIDAQAB\no0gwRjAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHwYDVR0j\nBBgwFoAUX4gIB2QB6UXJjATtV+cM3U6fnZkwDQYJKoZIhvcNAQELBQADggEBAE3y\n8masaSU68eq16upDvHqA5xyTJ+AI/NSyk8PZESnU2imLpO1FlS9KFnUAgLBReDI/\nAizBfwn5Kweu5BemJOygwX2xshTcuE5quGdd3i/R8cKNhgt/LggxSxBXFczyA8l3\nrmW8Crk97JCGyEdc0TkSpO1q3qxnOKAjndaTBqnT4b2xEoWSuHdtKM3Gv/aBP3Yp\nV9AuM1F+gfHeOh/Fo19KOOU+pJANV8ix4BQqZDt2w6R6l5MY+h/peWv3BmBvwPYv\n3Pbz8myim6FEkCCuV77MKggXPsK+hXLmwWtMvrBPjS7mCH23Aenq6KVq1GkIAzPN\nL0UnnMsswxHgHDbWpZ0=\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAnQdx/5T2htdh7hAU4NiYIjF9kNsx2erCPCP0F3GkVViqwoEH\nYnMOKFagyzdFlnliQ4eUxPRp0fPqn1JxyszUtSMMubNHzXQXk0SjBAu9dS/6VtaA\nYrUFUTpZU6cYUNVPZ4gN5yjA20GuUYjf+TWCt078dOPG/MyR+WvY8h1VfWSCDcEO\nXrtfpq5E9D09rqgYXjXAN9dykhdET26CRI+yWbN32cIGgzwjJh1KILYc/TCfjbOE\nr+YQDzmvYuBOvOILpDSPByM49Fh8q87jte9T7ydlG1RW1l7GADE+oB0VkQxL9uZq\nHxRqPte2qtQMwCM3EYhNq2LOoAaWFzx+/9/JfwIDAQABAoIBACgPMS7hgq7NnYcN\nBTaDKvR2KbFdqe8M67ZJ+chNTn4TW6S5I/gin/b8epK9K/yCROYzXWmNbL2J+03f\ny3XQIWeAZIuvR98LAcSpGuk6UX/m2Hd0y1XjFlMtjoI/u31LnbEszVcuV1zX+a+F\nOpYp54n6FX+AaFAvpAG8WKETiK6vIgbzMwvsARnJlJX8XXBE6+9qT0tYExiJCZtM\nCC7tzu0ezku8C6YFuPdzCW1Tm+xb8koOnHhwXjDPcp3V6rgpHWowR4qM4vZ7XBV9\nir2btdUlkazPYLhRz/r1p4ulZspVWy8d1clW9jgZ02BEeETgqWOx8PVTjcf+ZZZD\nHMXatNECgYEAzTUnDISh/+6Y/RC2JBMBARaeejuNjWc8WKFYa1g8l3eic6N+HDIl\n2JF4tD1vsi5uxLZzPR+wezpFTNtYiNAWXWvOyXfjZVHy2nrTyD7MMbZ8gqA8aOBp\niyMa7zif6Gy+RexTQRpSCAW4t3KBRc47qy/2qVRf4LbcEb6swZkmd0cCgYEAw+V9\nomFZOWluQK76XJaEh1+BHxk4+AHNRoksvmu8OTt+ABW0+P/1dnZDlhyl9bPbL6dL\nsbRsqf19plOF3bAaCcQAQgCNDVrLJJcGdxbw257KuI0NtVeIW4rxvNGSHcm7hsrB\nJLaYhxP1V1qf2WALT5uiYhivICQNkYzPc8RJqAkCgYEAwEKedVIG3dzUJbX0kNPl\nSvnAPVFyjBs/JOL2Doy7KEaEQ8fYLd6mKsQQzP4Kmmx6h39RdOEt3iZ4K0wPJQ+h\nBKIvOf9DY/hlimEt7x02/xS0j0ZFkxU+jYe0gpEQ8RiBJM4IKqTYWn/R0r5Lc/WH\nXhowBfHxan6orU9yWGh+650CgYA8FXZsSJl6P3keg8yse0oYz1UmObE8eCkC+m3r\n1dV8ZF/oHMBOIwuhkvJ150GL0+dlfVV9Is61cNeKHVIQxcOmvSQrGkopD3EBPwUv\nn6yuX8zjv/e1aCydj0dH16uOUWKgHC4TWaH8xEVazqP6oze06hJrLhEAta4nt12l\nr028KQKBgBaf5ccm83O+LQosAI/jVxRUVWOtUjj/hWz2irWhIkPTN+ltHmZ8Toqi\ncYc3tsyizIFRANNX09sBFCrak8NXSVQ631/PhmUmf+Hb0P82QI75BdYCdtDyMf6k\naB2GxyBQFS2Bg6r3sGmB12LL2o++QNeM1TRlnbWZ6EWtnRzqUZ7r\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM0VENDQWNtZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFTTVJBd0RnWURWUVFERXdkcmRXSmwKTFdOaE1CNFhEVEl5TURVd05URXhNVFEwTjFvWERUTXlNRFV3TWpFeE1UUTBOMW93RWpFUU1BNEdBMVVFQXhNSAphM1ZpWlMxallUQ0NBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQUxhenhsYzJlWUNGClJsWTNZQ1owd2ZqYzhkMjFBSkRwc0V6TU4wSlFSZEpydEVBbjBpUHJ0WDBuNzlvbkE5UGdMWTBkd2g1ZHMyN28KWHU3a3VtNjQvMXdockJQbE1nUTlPTFFjOXZUQ1FmNVZqM1VMVHU5L0gyU2xkSGxkSHFaQ1ZFaHkwSmI3ZDFxdwpUOTgvVWF2cFRjVkl6blJEd0xucGpTNUhQODQrOHhxZkVsWWlDbU1ENnd4UGJ4Q3VqdlRpUkxCWVpBdHQ0NFRlCkxsVFZSbUNhWjMzaTh4UGhWV1Z3Y250bW93WkJMS1B3dk8zYmJsUmxSZmpybmhXTXJnMEFQNFFPQUV2QmIzTFkKbU1EdDBMU0JDOVZoL2p5eHRQekpqUnkzV25uSTg3VkpWUFZvTjlpSm90ZUFUU0ZwZDNla2hhTFJRUEZMVEhGcQpTU1pGb3FBRmRiY0NBd0VBQWFOQ01FQXdEZ1lEVlIwUEFRSC9CQVFEQWdLa01BOEdBMVVkRXdFQi93UUZNQU1CCkFmOHdIUVlEVlIwT0JCWUVGRitJQ0Fka0FlbEZ5WXdFN1ZmbkROMU9uNTJaTUEwR0NTcUdTSWIzRFFFQkN3VUEKQTRJQkFRQjVta05ZQUZRNmRzOVVxb2Mrc1JZbnhCQ3A1N3dtQ1VTQUE2QWV3dVlIR1M5aWJHR1EreTZHem0vcQoyb1NmMWFNa3dlaE45OGlCNExrVzhRTjFHZnpYQnpVbWZQek1FQ2thd3Z6Z0ZQVGNRdDhRclZwOVhaZk9ZdDBOClUrbVpxaEc3NGNuV084U0M0QjZCTjNHajVhcTBrU09ob2wrTWI0T0p4SEh2VUdDd3grUWJ0N1kxMDJlQzVqWUMKcVdlQVEyVUJCZDViNkNBYU9yWGoxd2s1M3MxWXBKUHpEMmZUOG1vNjFObitLNmhONnpVdlMxQXIxQnc4TUNOZwpBcXZmSlVUejNma1UzRTQySzBuSUwzRTR3cmZ6OHV3UVo1ZE1RSWlrU2xnLytZSEtSbm94U3p5anoxVDI5cHpECkN0Mjk4cmMzSmhVeDFDZEc3VzdKNTNGQkY4MksKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=\n    server: \"https://192.168.125.10:6443\"\n  name: \"swagger-cluster\"\ncontexts:\n- context:\n    cluster: \"swagger-cluster\"\n    user: \"kube-admin-swagger-cluster\"\n  name: \"swagger-cluster\"\ncurrent-context: \"swagger-cluster\"\nusers:\n- name: \"kube-admin-swagger-cluster\"\n  user:\n    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURDakNDQWZLZ0F3SUJBZ0lJRDI4ZUF5YzNUVU13RFFZSktvWklodmNOQVFFTEJRQXdFakVRTUE0R0ExVUUKQXhNSGEzVmlaUzFqWVRBZUZ3MHlNakExTURVeE1URTBORGRhRncwek1qQTFNREl4TVRFME5UQmFNQzR4RnpBVgpCZ05WQkFvVERuTjVjM1JsYlRwdFlYTjBaWEp6TVJNd0VRWURWUVFERXdwcmRXSmxMV0ZrYldsdU1JSUJJakFOCkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQW5RZHgvNVQyaHRkaDdoQVU0TmlZSWpGOWtOc3gKMmVyQ1BDUDBGM0drVlZpcXdvRUhZbk1PS0ZhZ3l6ZEZsbmxpUTRlVXhQUnAwZlBxbjFKeHlzelV0U01NdWJOSAp6WFFYazBTakJBdTlkUy82VnRhQVlyVUZVVHBaVTZjWVVOVlBaNGdONXlqQTIwR3VVWWpmK1RXQ3QwNzhkT1BHCi9NeVIrV3ZZOGgxVmZXU0NEY0VPWHJ0ZnBxNUU5RDA5cnFnWVhqWEFOOWR5a2hkRVQyNkNSSSt5V2JOMzJjSUcKZ3p3akpoMUtJTFljL1RDZmpiT0VyK1lRRHptdll1Qk92T0lMcERTUEJ5TTQ5Rmg4cTg3anRlOVQ3eWRsRzFSVwoxbDdHQURFK29CMFZrUXhMOXVacUh4UnFQdGUycXRRTXdDTTNFWWhOcTJMT29BYVdGengrLzkvSmZ3SURBUUFCCm8wZ3dSakFPQmdOVkhROEJBZjhFQkFNQ0JhQXdFd1lEVlIwbEJBd3dDZ1lJS3dZQkJRVUhBd0l3SHdZRFZSMGoKQkJnd0ZvQVVYNGdJQjJRQjZVWEpqQVR0VitjTTNVNmZuWmt3RFFZSktvWklodmNOQVFFTEJRQURnZ0VCQUUzeQo4bWFzYVNVNjhlcTE2dXBEdkhxQTV4eVRKK0FJL05TeWs4UFpFU25VMmltTHBPMUZsUzlLRm5VQWdMQlJlREkvCkFpekJmd241S3dldTVCZW1KT3lnd1gyeHNoVGN1RTVxdUdkZDNpL1I4Y0tOaGd0L0xnZ3hTeEJYRmN6eUE4bDMKcm1XOENyazk3SkNHeUVkYzBUa1NwTzFxM3F4bk9LQWpuZGFUQnFuVDRiMnhFb1dTdUhkdEtNM0d2L2FCUDNZcApWOUF1TTFGK2dmSGVPaC9GbzE5S09PVStwSkFOVjhpeDRCUXFaRHQydzZSNmw1TVkraC9wZVd2M0JtQnZ3UFl2CjNQYno4bXlpbTZGRWtDQ3VWNzdNS2dnWFBzSytoWExtd1d0TXZyQlBqUzdtQ0gyM0FlbnE2S1ZxMUdrSUF6UE4KTDBVbm5Nc3N3eEhnSERiV3BaMD0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=\n    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBblFkeC81VDJodGRoN2hBVTROaVlJakY5a05zeDJlckNQQ1AwRjNHa1ZWaXF3b0VIClluTU9LRmFneXpkRmxubGlRNGVVeFBScDBmUHFuMUp4eXN6VXRTTU11Yk5IelhRWGswU2pCQXU5ZFMvNlZ0YUEKWXJVRlVUcFpVNmNZVU5WUFo0Z041eWpBMjBHdVVZamYrVFdDdDA3OGRPUEcvTXlSK1d2WThoMVZmV1NDRGNFTwpYcnRmcHE1RTlEMDlycWdZWGpYQU45ZHlraGRFVDI2Q1JJK3lXYk4zMmNJR2d6d2pKaDFLSUxZYy9UQ2ZqYk9FCnIrWVFEem12WXVCT3ZPSUxwRFNQQnlNNDlGaDhxODdqdGU5VDd5ZGxHMVJXMWw3R0FERStvQjBWa1F4TDl1WnEKSHhScVB0ZTJxdFFNd0NNM0VZaE5xMkxPb0FhV0Z6eCsvOS9KZndJREFRQUJBb0lCQUNnUE1TN2hncTdOblljTgpCVGFES3ZSMktiRmRxZThNNjdaSitjaE5UbjRUVzZTNUkvZ2luL2I4ZXBLOUsveUNST1l6WFdtTmJMMkorMDNmCnkzWFFJV2VBWkl1dlI5OExBY1NwR3VrNlVYL20ySGQweTFYakZsTXRqb0kvdTMxTG5iRXN6VmN1VjF6WCthK0YKT3BZcDU0bjZGWCtBYUZBdnBBRzhXS0VUaUs2dklnYnpNd3ZzQVJuSmxKWDhYWEJFNis5cVQwdFlFeGlKQ1p0TQpDQzd0enUwZXprdThDNllGdVBkekNXMVRtK3hiOGtvT25IaHdYakRQY3AzVjZyZ3BIV293UjRxTTR2WjdYQlY5CmlyMmJ0ZFVsa2F6UFlMaFJ6L3IxcDR1bFpzcFZXeThkMWNsVzlqZ1owMkJFZUVUZ3FXT3g4UFZUamNmK1paWkQKSE1YYXRORUNnWUVBelRVbkRJU2gvKzZZL1JDMkpCTUJBUmFlZWp1TmpXYzhXS0ZZYTFnOGwzZWljNk4rSERJbAoySkY0dEQxdnNpNXV4TFp6UFIrd2V6cEZUTnRZaU5BV1hXdk95WGZqWlZIeTJuclR5RDdNTWJaOGdxQThhT0JwCml5TWE3emlmNkd5K1JleFRRUnBTQ0FXNHQzS0JSYzQ3cXkvMnFWUmY0TGJjRWI2c3daa21kMGNDZ1lFQXcrVjkKb21GWk9XbHVRSzc2WEphRWgxK0JIeGs0K0FITlJva3N2bXU4T1R0K0FCVzArUC8xZG5aRGxoeWw5YlBiTDZkTApzYlJzcWYxOXBsT0YzYkFhQ2NRQVFnQ05EVnJMSkpjR2R4YncyNTdLdUkwTnRWZUlXNHJ4dk5HU0hjbTdoc3JCCkpMYVloeFAxVjFxZjJXQUxUNXVpWWhpdklDUU5rWXpQYzhSSnFBa0NnWUVBd0VLZWRWSUczZHpVSmJYMGtOUGwKU3ZuQVBWRnlqQnMvSk9MMkRveTdLRWFFUThmWUxkNm1Lc1FRelA0S21teDZoMzlSZE9FdDNpWjRLMHdQSlEraApCS0l2T2Y5RFkvaGxpbUV0N3gwMi94UzBqMFpGa3hVK2pZZTBncEVROFJpQkpNNElLcVRZV24vUjByNUxjL1dIClhob3dCZkh4YW42b3JVOXlXR2grNjUwQ2dZQThGWFpzU0psNlAza2VnOHlzZTBvWXoxVW1PYkU4ZUNrQyttM3IKMWRWOFpGL29ITUJPSXd1aGt2SjE1MEdMMCtkbGZWVjlJczYxY05lS0hWSVF4Y09tdlNRckdrb3BEM0VCUHdVdgpuNnl1WDh6anYvZTFhQ3lkajBkSDE2dU9VV0tnSEM0VFdhSDh4RVZhenFQNm96ZTA2aEpyTGhFQXRhNG50MTJsCnIwMjhLUUtCZ0JhZjVjY204M08rTFFvc0FJL2pWeFJVVldPdFVqai9oV3oyaXJXaElrUFROK2x0SG1aOFRvcWkKY1ljM3RzeWl6SUZSQU5OWDA5c0JGQ3JhazhOWFNWUTYzMS9QaG1VbWYrSGIwUDgyUUk3NUJkWUNkdER5TWY2awphQjJHeHlCUUZTMkJnNnIzc0dtQjEyTEwybysrUU5lTTFUUmxuYldaNkVXdG5SenFVWjdyCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==",
+        "name": "kube-admin",
+        "commonName": "kube-admin",
+        "ouName": "system:masters",
+        "envName": "KUBE_ADMIN",
+        "path": "/etc/kubernetes/ssl/kube-admin.pem",
+        "keyEnvName": "KUBE_ADMIN_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-admin-key.pem",
+        "configEnvName": "KUBECFG_KUBE_ADMIN",
+        "configPath": "./kube_config_cluster.yml"
+      },
+      "kube-apiserver": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDnTCCAoWgAwIBAgIIV2L0UBiPIdcwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDhaMBkxFzAV\nBgNVBAMTDmt1YmUtYXBpc2VydmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEA2fvyym/4g5BC9mvIUtQ+25PxDVMyrZnGmDZwuTI8OU2zRqL2FS/alKAl\nFJNdkQ9ZSmxEac/h/drEYWZfLzUBUlzi6u0iO+GhQpVPjQRuh3VYikCGuPCYGipF\n5LXAMnaWf/VLbXnqHIfNUpGNuvXe4QULKMUJiY4Yr9apP/HVkmRRvRxZxpXLPGVf\nYhgbi9aijIqBA7QZWjntm0YRE6zM7HsPXbXvClo+yBr4g3VSxMzt6z4flBpu1YZp\nnyJZoJBxQrXRZFmn7DvSjD+pBlh5yXi7y1A/Nb8AyiZE2S1BWRGuKxiq46nwPjCM\nd4sHLvvRVEEQhb/tud8LAA9unoyZ4QIDAQABo4HvMIHsMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwHwYDVR0jBBgwFoAUX4gI\nB2QB6UXJjATtV+cM3U6fnZkwgZkGA1UdEQSBkTCBjoIRc3dhZ2dlci1ub2RlLTAx\nLW2CCWxvY2FsaG9zdIIKa3ViZXJuZXRlc4ISa3ViZXJuZXRlcy5kZWZhdWx0ghZr\ndWJlcm5ldGVzLmRlZmF1bHQuc3ZjgiRrdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNs\ndXN0ZXIubG9jYWyHBMCofQqHBH8AAAGHBAorAAEwDQYJKoZIhvcNAQELBQADggEB\nAIbz39J/GTZ34oNWSMIvxntVFL90zbB7uDI9cZQvlzjY/ujMJKksIooAKX05P52i\nuzmUtZplFqGvN7/5eF/fhTMA/Ov2h2Ig7cPejujPIo89w1GsYGaAEa7EEXH6bxD1\nIDCy2l5BHOzOm42ARI+bwU5qt7vh2pVqWU9fgesodI720Ex9ZppUqjxwJ13J2edH\n9gmjG2B0G7FyfSjM/tEJkwppdMPJ86IRXhiROYCN7FV37rpMLIKpEBPXgj5m7U8U\nAtDDAlxk1NKwCA77VCLLafqCERxeK7tjvn+j9dnvDS5tdsVBKbVk11iPdmdfNNby\nx9Bd0BOqXYYfNIqmHfM2zGg=\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA2fvyym/4g5BC9mvIUtQ+25PxDVMyrZnGmDZwuTI8OU2zRqL2\nFS/alKAlFJNdkQ9ZSmxEac/h/drEYWZfLzUBUlzi6u0iO+GhQpVPjQRuh3VYikCG\nuPCYGipF5LXAMnaWf/VLbXnqHIfNUpGNuvXe4QULKMUJiY4Yr9apP/HVkmRRvRxZ\nxpXLPGVfYhgbi9aijIqBA7QZWjntm0YRE6zM7HsPXbXvClo+yBr4g3VSxMzt6z4f\nlBpu1YZpnyJZoJBxQrXRZFmn7DvSjD+pBlh5yXi7y1A/Nb8AyiZE2S1BWRGuKxiq\n46nwPjCMd4sHLvvRVEEQhb/tud8LAA9unoyZ4QIDAQABAoIBADJBIJ9FIzEJoDZ5\ncMyPvBIZUFh3Ftbo/dz3qBM6HqJDZJJjXYJS7vyW0xWkR8z6keZTgY43a+1/cwjV\ndhpHCQ/49COfGeZeRTQ5ggaLwAOgrRHqgGTAqwBVQJnSwQWhS18iqQoLMkrzkAV6\nIwe4SXLtG76Bdops5Qoc3hYs5cUCyNjT6oq0ghloNo8hKS4Q6ELet4kmzvoEbRnf\n9Z41B6GmIS6IAdPjLVs/kUcRJBMNeR1ibRW/13PTjpNJRHphIAgYy+xHUHAUp+yg\nW9AFtn5AWPkTzAC+1tXixLovy1hixqs4ZqPaOvXkCDYa/BrjB/yS4BYwt+nsGvW+\npPZd7tUCgYEA8HJB1/lmTMYbqCJx/OjOvXQBAFj2lMCCnLhhE9mgIzxb0AL2gJfp\nsbe9LduKdh8UoZU6V1EXKGVSAMcPueZjPl4d6DiuWh5XNxiGBZBww3Yu2lx18st4\nLBckEoQu3EOlEDDlkYagwZCOLvFC3VFMTsGwgiX83m2RxW5vf1sNJB8CgYEA6BW4\n/IeuqJoinFYjQmryPEqFXIuo9pl9Lj+kdbWf7AKs0EuY2EuN2/Z6WXqwIhh8d7sX\nPhE3iuVV1RUBIBBKVbDzz/C8SUG3rEFY4imDxTx8O6Zyyf3S4FgYouwwZzcsfB/L\n0EgYiU6mG636L4+og7bk2yTnRC9YUikSpbp+gf8CgYEAu7Akj4cBgMpfilYg7k94\nGdC0e2X2TNUc32LZfFozM24JKQ03B9gNNol7ZZFqupu2Sg8ndEM7NXApm6vHLdCW\nBXgIFl4wUu4+HCbLbwp5y0m0dwUXmMeU7a2+namKvqsa7NGOUZNqZs4E/sWa8RFl\n5FAzDNTEV4fl8twqspoLXvcCgYB21piwhnGC19odH2ZSnhyHjskXCFRuYU3eHqyB\nsYy/9uayieMr7hQnq+AebVo/OzaQwHY4S+ya7K+0ulqnJnBJzKAru+NNx57bT2LJ\n++QDXONoT+S7VYNjaPjEhBiM4Y2fyVA9yIz30hPwXHedXvw05bPuGslo+q1I9Msd\nnY8l1QKBgCsLe48ySloqc9e5nTN2kf37rCsFh6Iq4kv9bxg8Y7/8wXoH567WSKA5\nGtQe4O56EOeiczM9MVKen5WKxauRGYbZRwJGp/chKA6QvJMqvoRH0L++jUBPKDsn\nAeklpwot4vavM2G6OHa+MD/0+1n5wCJDWbGEtPrQ7g9ZazcSjaGo\n-----END RSA PRIVATE KEY-----\n",
+        "config": "",
+        "name": "kube-apiserver",
+        "commonName": "system:kube-apiserver",
+        "ouName": "",
+        "envName": "KUBE_APISERVER",
+        "path": "/etc/kubernetes/ssl/kube-apiserver.pem",
+        "keyEnvName": "KUBE_APISERVER_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-apiserver-key.pem",
+        "configEnvName": "",
+        "configPath": ""
+      },
+      "kube-apiserver-proxy-client": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDJDCCAgygAwIBAgIIFVGnutWnwKwwDQYJKoZIhvcNAQELBQAwKjEoMCYGA1UE\nAxMfa3ViZS1hcGlzZXJ2ZXItcmVxdWVzdGhlYWRlci1jYTAeFw0yMjA1MDUxMTE0\nNDhaFw0zMjA1MDIxMTE0NTBaMCYxJDAiBgNVBAMTG2t1YmUtYXBpc2VydmVyLXBy\nb3h5LWNsaWVudDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMavVIOf\ntMfe/MpUFRNP9DTf76OaBDeiJdWMryVUci3JcQrXgxDFq8tPpXa/qE1vNMKDMrQb\nvIsV3dQcJXlS7ioS8iCFx9yIkR/vQne8Brq8SaSGzjbzbGei2j2TkTfjEzzCVWPk\nzs13WVqCswjgwMP6JgQHH0p9SLlPTfiL+qhyjWlHD4MUE4WZ/JiJK2Z1MKLhDPsx\nuIt9p7+hxXxmj8nF88B9uhQq8Fd7FpC6gs70dNjHVPcl+pum75LUf0VfQIj97Cij\n/gtDmbp94RaDCmYOy0cWpqF/Ns0GGqDSNzcVVULmQ8yVtEq0pEh8v96frXw7X+WW\nI2SkWjYYYpy6DIcCAwEAAaNSMFAwDgYDVR0PAQH/BAQDAgWgMB0GA1UdJQQWMBQG\nCCsGAQUFBwMCBggrBgEFBQcDATAfBgNVHSMEGDAWgBQs98xTBQQBLAPIXX7CLicG\nDQDV5zANBgkqhkiG9w0BAQsFAAOCAQEAKuL3+SUShI0paeM8YQDksryQljK4Q4qm\nzZAa+2Osp9GBLHQSVuPLiKT9V79TxWLwgKE4XstN5O4BNmjaFF8GLP93CF945D6z\nHogVVSohyj+msFm3jO/ZspZo1f8wOIWc+8e+bbmL8oDoEYXSdf6PRyo0e0vZTYQ9\nWqrOXoIAbtXw5CTOWOOZmhZbh3Qea4U1qGetP35BGdtlOYBhMeL+KYMYC4+EmKp2\nlwjWjlR77i5vIufvFMQrHjVQuEfUdjiqGFCL1H1PC6XafAsHsGbmRPqk+LhLXYH/\n3ZvYUQqmX9/qSqzSNGzvKn15Co2a6gz23o90YBMxwaoEnRofgcZtrg==\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAxq9Ug5+0x978ylQVE0/0NN/vo5oEN6Il1YyvJVRyLclxCteD\nEMWry0+ldr+oTW80woMytBu8ixXd1BwleVLuKhLyIIXH3IiRH+9Cd7wGurxJpIbO\nNvNsZ6LaPZORN+MTPMJVY+TOzXdZWoKzCODAw/omBAcfSn1IuU9N+Iv6qHKNaUcP\ngxQThZn8mIkrZnUwouEM+zG4i32nv6HFfGaPycXzwH26FCrwV3sWkLqCzvR02MdU\n9yX6m6bvktR/RV9AiP3sKKP+C0OZun3hFoMKZg7LRxamoX82zQYaoNI3NxVVQuZD\nzJW0SrSkSHy/3p+tfDtf5ZYjZKRaNhhinLoMhwIDAQABAoIBAQCQyQffeyx0Um0I\nzEknb6ZYObAaGoxkNkc33XNs0qL59sfnzLD4MfRFDl9Xr8bn1tgtvwnd8jBtcpva\njEBKr0Jbar8DMDo63VJUYTigpGaLAdbwjEQOC0m+JBDBup2iillkd4FecEi7tfNp\nX8E0AQS4S7wUR1RoJfAvCjmZm/gnczftjcXtVzya3pDuN4tcB+DzAxQA3qBV5Ua/\njkp/OHoWXGrGqyIpy2kkZXIra5++zqb6k6DV+7Y/laigiZ74SLz8Eaki9G0Q3LwV\n0E3hwef1sAITcnsQ7ywhzD71tfTM1wZ5foTn9LYNePrPRLkO4HeWANLNMTtEiX4h\nusv02pyxAoGBAP06AzVmfH+SVIpDxXeUXIsXrRr+OGNOVFXb8QxNCpdXCCwPZbHT\ngrb3uVNs/rpOx0Nidl/WXQAtSu98zyq0Y2YkJTosqWC6KBMBotsSLtBX5MvK7O0X\nx/q+VSOHmVscV7kqD+R9Awj4/Q1kUlDmyqVzNwGqPYrqPafXEajn3+rbAoGBAMjc\nZT/z2N4NIlOcr+zK+JjguM/4vGPTtupomabw4ml45G7Pq3sDS0U+L+ojDGsOfe6c\npngYLGPlAYxrTYP8DZxLkwPNL3TySKqGvq33owaLYdftsUDY5c92SJWSiGeenfzA\nkYLQt3vuwme1Q986E/hhZX5UXji2EY9ZzODLypbFAoGAAa5H5SvX+bTL8NsATYnj\nj1zJ3lr/ntEfSC6ci/ta7aQ7Pqefgi2oOXSteztG+Y+aTP0zUfGHTn/+dlZ6vYrS\n+hOVV6yCN00lBPNG1HNrciCTOTMQnYZB4o0u3XyB7RPkFSuNTXPy+DVG4LbgwP63\nK5/3JoCtxeVGIX4Q9PENEG8CgYBnGGiHqLt5Tbh+vf+2RH/QyBdT99GKU5KhQksL\nWrx7cmedUM4td4Vc5wxk2tR25ptQq+rt3Up7g4GF91V0Fx1NSaUN4HUpS2pszHh2\nhpKQu13fHMtMA4gBMi8TRoDo3ossvhJx2Hs1C1mRLYLGwuKZLDSR4O/zn8/niioU\nf8VeGQKBgQCa9AiOD+xgEBjviF6bmo7gBOpxexZjspN96wADrXaPrZMWR1DzxX+2\nFsygEqVqaZr5pMru7A6hDgoITEtYs+03XkZn45EymIEE/+JC7DyDKAEvB8QqclO8\nTq8SA9ICX0KgB7AycCtMxzygbrwX1MgwL+d/XzP1H+bJ59KIpvVGGA==\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-apiserver-proxy-client-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-apiserver-proxy-client-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-apiserver-proxy-client.pem\n    client-key: /etc/kubernetes/ssl/kube-apiserver-proxy-client-key.pem",
+        "name": "kube-apiserver-proxy-client",
+        "commonName": "system:kube-apiserver-proxy-client",
+        "ouName": "",
+        "envName": "KUBE_APISERVER_PROXY_CLIENT",
+        "path": "/etc/kubernetes/ssl/kube-apiserver-proxy-client.pem",
+        "keyEnvName": "KUBE_APISERVER_PROXY_CLIENT_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-apiserver-proxy-client-key.pem",
+        "configEnvName": "KUBECFG_KUBE_APISERVER_PROXY_CLIENT",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-apiserver-proxy-client.yaml"
+      },
+      "kube-apiserver-requestheader-ca": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDETCCAfmgAwIBAgIBADANBgkqhkiG9w0BAQsFADAqMSgwJgYDVQQDEx9rdWJl\nLWFwaXNlcnZlci1yZXF1ZXN0aGVhZGVyLWNhMB4XDTIyMDUwNTExMTQ0OFoXDTMy\nMDUwMjExMTQ0OFowKjEoMCYGA1UEAxMfa3ViZS1hcGlzZXJ2ZXItcmVxdWVzdGhl\nYWRlci1jYTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMesc2/Fe3jF\n1vcU5wF7FHHe9JA3/9Uh/do/+0uhx3FaF4UVG/X8tGPjzyYD1xYI67GhrNGcrw01\nbyYJOzaJPINuSfqanHx9axnt+nNe6qG3y1DxqYokD8+4USYoEaS9RYcz99gREPvA\nNReJL+oyUmH7IuRFSQB9vsvXED6fl2XIfPVBZhseEn9UceFJ4Z9fiHdSInfXnTWO\nM//KnlhuVGujZGmx2i/HziF01oCCMrSZC6FU9zxouJ6ciMDkK+X1dP25hn83C/I8\n3mzvD8U9nXUMGjMpLYAQpsHRG9OgoN7YzKz5KI8qqbsfZUzqALFo7n8dJ8v8kX7G\nrLCuXt0KvsUCAwEAAaNCMEAwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMB\nAf8wHQYDVR0OBBYEFCz3zFMFBAEsA8hdfsIuJwYNANXnMA0GCSqGSIb3DQEBCwUA\nA4IBAQAOQodakwa0neQpOcCgaNskOdafFjYnvAJZ4nD6ilL+uKnLTi4oR5/OXnNf\nsFmMmIj0lq2II4b3QhiIOpblAfP2GR9guyszu3rS1aJlcLeQGYWGv8wHUdhm6ldR\nYwm4o2Ov1m8Z+PFknAIW/zvwYiX+U9DhApMp3dx5tAgNd0ymgp0YtCjCDqCUOZjs\n5KNlyVci5IdZk5yO/Qn/Oh+o8xFYxHSSXNpq+7GYKFGVt3zOh6bybiC2PB6RmyN6\ndL+16TCVZETV+getOM65TxMDJ7qzXG6yo5KX/O/TKhfZBc7PKGCRLd0xQx0UBM7Q\nKSvyCwUYCM066Nti5ZGOrHl66n4h\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAx6xzb8V7eMXW9xTnAXsUcd70kDf/1SH92j/7S6HHcVoXhRUb\n9fy0Y+PPJgPXFgjrsaGs0ZyvDTVvJgk7Nok8g25J+pqcfH1rGe36c17qobfLUPGp\niiQPz7hRJigRpL1FhzP32BEQ+8A1F4kv6jJSYfsi5EVJAH2+y9cQPp+XZch89UFm\nGx4Sf1Rx4Unhn1+Id1Iid9edNY4z/8qeWG5Ua6NkabHaL8fOIXTWgIIytJkLoVT3\nPGi4npyIwOQr5fV0/bmGfzcL8jzebO8PxT2ddQwaMyktgBCmwdEb06Cg3tjMrPko\njyqpux9lTOoAsWjufx0ny/yRfsassK5e3Qq+xQIDAQABAoIBAQClZqT5IY12Lew0\nIIx7HYmCCj5sePbjhpTSBc4UiJ69tvNkume/DOYhGMSvqN6y0hDrxBF0UWZweqLn\nzx3Nv0DxXprJjOmz9fCSOiANEcMq0yUImCbo15aBax1NjkOPQ3ok1VepE/oNkNpp\n9KpMRgMYRwBQN1SRo5g5Ip3CQlEXbdYBoAF+tzWyZkAuR9Dv2NzbbRU7F/H2Tv4W\n51bTiq3LE+TSChmHaxUHI2ZGFWWiihQ1tMQWxM4ExqU/bi5KnmbTESCwriuwW8XT\ni6EVwqQyUrNEtwqBmDbnJwfAo6WlX1LoK30rW0+78SPrAa1EHKkx11p3NqLUZ4GA\nc23HJJwBAoGBAODv3BORRMtpr4C7NhzZ3pZiaxDU4vz0yujGs4t/uWRYddoMHndi\nzChO78uZWOM9IajHf5R7lzTM6/nxtizywxOD3OGshEyyW9Y1mq0ifynerRnCKAXV\nebse1L2Aj+CYmn5P76CpgtPPMgTY8WOllKOCoExOS/70pN+PHlWouuyxAoGBAOM/\ndqk8ZYR0gN1vYFqApcfPSpVoftz/fp01cWW20qiY3cp4Nufi6sOJ+RiXDfFEsLIm\nOLTc/pxyJg+Spy2v6VbBWbioYF+WKHQcsGlrbAOFg2rdmmV+g6QJwfnKJXhUGkcV\nvrw6CyZ3p9Ai6XwMKOJrn0ed5sXxrOb5BeV3hqhVAoGBANKMksMaKnwBHE9ybc+J\nvEmmLDPgIezHsps7S1rbnoyoJQCKcYYsy487fEhm7QYf9b7Hpss0+K9q1cPrFixy\nvFkrB/mSA3DLTx1upa9EaCWoEv3WeKIlVcHqtRYBHiwMjCiJ6HLJ2PUsr9RLwYAV\nwNFg920VqRsoop/Elo911iqxAoGAMXv9W+bh+FDiStXY9nwzHWp/RD+n+HnOWW9s\nzQhdoQcArPk2g5I/KutdicRC7fnWPETkbkX9T5Xvwc5ehy1aM2ERJ4vKyKXLE1W3\n+IzCzZWCQ4AUAevlwI+7ZKhnNmeh/T639QbyrKK7sTAZBcEkGgHzgkXZHdt9miI5\n7Xj0oq0CgYAe3up6xt9KD546f3zmp7Aky3vyFq9ZGhXXGFXdJ2rUlZtWsc6m4jTh\n7CVllI7gTeUjTboZE6sM1D7MMT6NIAXEwb5nSEBzuLaLlOk2CRK9DCReTo75mnNY\n9PQzBjhagUNp+VoL5ytUj7vfMTykXNyuQSzvcDVL3DhuSzg5HzK+8A==\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-apiserver-requestheader-ca-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-apiserver-requestheader-ca-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-apiserver-requestheader-ca.pem\n    client-key: /etc/kubernetes/ssl/kube-apiserver-requestheader-ca-key.pem",
+        "name": "kube-apiserver-requestheader-ca",
+        "commonName": "system:kube-apiserver-requestheader-ca",
+        "ouName": "",
+        "envName": "KUBE_APISERVER_REQUESTHEADER_CA",
+        "path": "/etc/kubernetes/ssl/kube-apiserver-requestheader-ca.pem",
+        "keyEnvName": "KUBE_APISERVER_REQUESTHEADER_CA_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-apiserver-requestheader-ca-key.pem",
+        "configEnvName": "KUBECFG_KUBE_APISERVER_REQUESTHEADER_CA",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-apiserver-requestheader-ca.yaml"
+      },
+      "kube-ca": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIC4TCCAcmgAwIBAgIBADANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDEwdrdWJl\nLWNhMB4XDTIyMDUwNTExMTQ0N1oXDTMyMDUwMjExMTQ0N1owEjEQMA4GA1UEAxMH\na3ViZS1jYTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALazxlc2eYCF\nRlY3YCZ0wfjc8d21AJDpsEzMN0JQRdJrtEAn0iPrtX0n79onA9PgLY0dwh5ds27o\nXu7kum64/1whrBPlMgQ9OLQc9vTCQf5Vj3ULTu9/H2SldHldHqZCVEhy0Jb7d1qw\nT98/UavpTcVIznRDwLnpjS5HP84+8xqfElYiCmMD6wxPbxCujvTiRLBYZAtt44Te\nLlTVRmCaZ33i8xPhVWVwcntmowZBLKPwvO3bblRlRfjrnhWMrg0AP4QOAEvBb3LY\nmMDt0LSBC9Vh/jyxtPzJjRy3WnnI87VJVPVoN9iJoteATSFpd3ekhaLRQPFLTHFq\nSSZFoqAFdbcCAwEAAaNCMEAwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB/wQFMAMB\nAf8wHQYDVR0OBBYEFF+ICAdkAelFyYwE7VfnDN1On52ZMA0GCSqGSIb3DQEBCwUA\nA4IBAQB5mkNYAFQ6ds9Uqoc+sRYnxBCp57wmCUSAA6AewuYHGS9ibGGQ+y6Gzm/q\n2oSf1aMkwehN98iB4LkW8QN1GfzXBzUmfPzMECkawvzgFPTcQt8QrVp9XZfOYt0N\nU+mZqhG74cnWO8SC4B6BN3Gj5aq0kSOhol+Mb4OJxHHvUGCwx+Qbt7Y102eC5jYC\nqWeAQ2UBBd5b6CAaOrXj1wk53s1YpJPzD2fT8mo61Nn+K6hN6zUvS1Ar1Bw8MCNg\nAqvfJUTz3fkU3E42K0nIL3E4wrfz8uwQZ5dMQIikSlg/+YHKRnoxSzyjz1T29pzD\nCt298rc3JhUx1CdG7W7J53FBF82K\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAtrPGVzZ5gIVGVjdgJnTB+Nzx3bUAkOmwTMw3QlBF0mu0QCfS\nI+u1fSfv2icD0+AtjR3CHl2zbuhe7uS6brj/XCGsE+UyBD04tBz29MJB/lWPdQtO\n738fZKV0eV0epkJUSHLQlvt3WrBP3z9Rq+lNxUjOdEPAuemNLkc/zj7zGp8SViIK\nYwPrDE9vEK6O9OJEsFhkC23jhN4uVNVGYJpnfeLzE+FVZXBye2ajBkEso/C87dtu\nVGVF+OueFYyuDQA/hA4AS8FvctiYwO3QtIEL1WH+PLG0/MmNHLdaecjztUlU9Wg3\n2Imi14BNIWl3d6SFotFA8UtMcWpJJkWioAV1twIDAQABAoIBAH91seR8G43e7LAP\nV+PcRsqwkYgj025FqfoZ6l84E032V7z+SutGcMoMx5dA6rmwxvaRETEQG7M/J6Ow\nLKQ8KeKDl0IV/qvYbiuxnVQqBdJCrJ9yMTKCVEtp5nUY0t4YniYg+4apjp3VLRPJ\nX9f4HoqI/Yc9EUJiPl1P1aK0ZfNmYo9nY2i3LoZhkpGNnl8Z+9A9CGRUG5LXGREV\nFB9SEUeyNSL7BaVgJ5dYSG+m9ahQ2/t/ErDXV5Y3TpETe7gFMNqnlVuXqn+mDXR2\nMPQpMe3atJYm8p8zGX79P1veGP0NlyHeh20NB1F/uNSsiFMtRs717baZrOHilS6a\nZdgYWMkCgYEA0rUr62gKI75XZDeBFX7iQP5jRkIe6WiN2VOIJdpaGlgeOuRfOTQI\npN5FxNlrKLvw+s8TMCoNy9NywpT2uzSLSJ1ccS5CkxfaiGOigZ3vr2k6TgRpVRxT\noNT+qveW3WJWaP6o89Lb3KIFIxLA8sGKsqANQ/gy9fk1+PDeIfKeu5sCgYEA3fmE\nrscinKtVrA8lpbC+oLHhRPNZlRcs84zmL12YMDN70yC1by0Zz/q8dBUQta8nP2N+\nuA9afiE+zP+O2ZoD7z94wVx7BlplVabAc93/nSpd4sxLQmV0MF2cLDC/WYNoE/B9\nOMUrCub6/G7VVCD/O92Cl3ONcR5VvuGDoWKOVhUCgYBwWSmR22eMp3DxfqbVT1JU\nVU+ZpqfUzGrV9jQh+ssQQOvdeudLGPOC9QE+dK8uiQd0s/UHOWUhyRzno4XrS5j4\nnu8raf8VbyKWlomPkya54OG1t6RyPShaGTew8VL/t+9bDG4Jk+SnP7x9dwJqbcgG\ndlCcbTq+7KJamhPXBgadAQKBgDniUWlKYIo+W67snEKi3nMFL9tNIjUwv/Ya7gO4\nAnG/WzDpPKbrOen0VqRmwd6++BsdlPPmfRCbFsdadSPld9Ux1gmGVkaH2BkHzPPq\nFjgjzivQXmfIEQ5zusADTkLHc6KPefgN4nWLWjPtqw+vMx+nWeCor1+qK24FXM/+\n5WMpAoGBAJX9C/cE5NS57HN7zfO5Bw3QQnnijcF04KUZDijwcGE58d7yD+KNLKZj\nDMIg14ScA7xr73MLfERTYuQD9XMWmR7iO9W+EDPuBGztB7jI6b3iYo9mMN5daIYL\nMP4TUP4Cu1dc9WmRDjZnF8flufG9pLd54SMEOVMxbL5HyAXOe2jl\n-----END RSA PRIVATE KEY-----\n",
+        "config": "",
+        "name": "kube-ca",
+        "commonName": "system:kube-ca",
+        "ouName": "",
+        "envName": "KUBE_CA",
+        "path": "/etc/kubernetes/ssl/kube-ca.pem",
+        "keyEnvName": "KUBE_CA_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-ca-key.pem",
+        "configEnvName": "",
+        "configPath": ""
+      },
+      "kube-controller-manager": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDBTCCAe2gAwIBAgIIHtEskoWY52QwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDlaMCkxJzAl\nBgNVBAMTHnN5c3RlbTprdWJlLWNvbnRyb2xsZXItbWFuYWdlcjCCASIwDQYJKoZI\nhvcNAQEBBQADggEPADCCAQoCggEBAK1R74DgDkZ9Fv//RtSuBM3SFebCdjt+xMDI\nsGxR03tEQ++hs80y90uy4eBWJXJrllZjG/Uh+T4U5CuKv7CB9VNlW3RYElArquCt\n/vZ8IqmtM914mGczrcppftgUShQGxR6KEwoauVrgZJjy82fek7ODmKZEdWO37h0C\ngUKnTaeVG9cKBgOcjyHX/CEZAMvVVYf1WxFu1AuDqeQkpJoWyySV59MZj4pKnI6S\ntj8fUpdC5jI2+NnQuwoAZbWEvUQhIqCfMK2+YBdhJ9GxuNGN2yUFn94aBc2ZxiJm\nJS9Oi8gH53NCvC1ZPUwpfH+rbhJ+3x5ptiSazZXMV9uf4VD8Fq8CAwEAAaNIMEYw\nDgYDVR0PAQH/BAQDAgWgMBMGA1UdJQQMMAoGCCsGAQUFBwMCMB8GA1UdIwQYMBaA\nFF+ICAdkAelFyYwE7VfnDN1On52ZMA0GCSqGSIb3DQEBCwUAA4IBAQAml67ntaVI\n0NkaReum0v2Ze5OPjKy711CDM3GHASjoTY7dEaRZ5I3s4m/INXgH7HVCNUpUpFUu\na+GDG+wEqanM/TCpGEcWzhzxYkEm7H8Vg6mmEPvgFIBPzTTP3UVOvfoxiGNPSFK0\nxLuj8Y+5v39PaZZK3CR58kwDJz5lwen8Rd8vkcey+nlxaxltAXSqQDx/tCEJgf8g\nDsZCh6Nt0kqSy8h/xgv+B128zrwGrcXNvpq2Yl6B6ARAvUXp03ctQEpH5WFjt7y8\nYRkdO+KIJx0U4wHCMhX4InA2gzrKAiAhXF8bxMM7V3r7vvNDDHYR8T5aOaRYI85G\n0NPVQBWmhPNg\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEArVHvgOAORn0W//9G1K4EzdIV5sJ2O37EwMiwbFHTe0RD76Gz\nzTL3S7Lh4FYlcmuWVmMb9SH5PhTkK4q/sIH1U2VbdFgSUCuq4K3+9nwiqa0z3XiY\nZzOtyml+2BRKFAbFHooTChq5WuBkmPLzZ96Ts4OYpkR1Y7fuHQKBQqdNp5Ub1woG\nA5yPIdf8IRkAy9VVh/VbEW7UC4Op5CSkmhbLJJXn0xmPikqcjpK2Px9Sl0LmMjb4\n2dC7CgBltYS9RCEioJ8wrb5gF2En0bG40Y3bJQWf3hoFzZnGImYlL06LyAfnc0K8\nLVk9TCl8f6tuEn7fHmm2JJrNlcxX25/hUPwWrwIDAQABAoIBAFCr2nZ50ysr/hCZ\nmTZU6ReDuX329WEr2BiDUNqaG308gQKAmVfhaQlq8YehkTx4pzj+WHz4mzIyNyGt\nKxvU4YM3oiG8/IkkShzZ39qKXPftDj7/arBedX3JLKkWiIRZwlY8njAN0EhkOW6X\nZoPqLYVYsyxwoNMRQVtvVwrXJGXjVHqs+/pvBAlnJSxRli9eExa2jndcrUK9nEKU\n8fyMviWozrWq1YwCQrpPQNCV8sR8zLi6rEVp91ovtwPXYnJ6HaYRLPApWMsgPIT0\nrMHWXXsQ9zOVSdYRmDTlhL4jwCau67KsH2goaUgx6z5kk/+nKyqFlT4dx1NA1c6u\nNB/fa4ECgYEAwKCHJgrKHF+/YMTMxrM00JeiJQlGYqo3vpcawyZ8A1WI9heOib2W\nI0x8KOqSzKuykz11sSYBVZQhR9Jr+YLpS39PZju2wluE80cyD5ejvkJfV/n8sulE\nQF12O+gWbHNkc60NxrIb6LNJr7vEM0EF06NCuYCUU8oO9SC7ZMBnE4kCgYEA5ldU\nbRo7ZiHxi0kKEwNxTNZ2e4m1mMuextfN4y9Enm5hKq3Vc9mHs+Yolg9FqeLW4HAp\nPGwe6m1rfmca3D6pgVNF1DyI2aaz7MsTfHUJm0uq5PUhTn/u0JMSeVPFIMmI6Zbg\nJS5eA9L9T+Jz7rbtK9PnRjGYdPQFjQgRg1yncncCgYBBjB6RHmjKIPbBmhZIoyCc\nvoyJZ8+QsXWIoGiV8ZmPlOKnQzrYui/F0TgKwE+139NDcU2EO3eGxIJSq1Lcs+Rp\nMWg2VKmLF5N1KUvqrGIm0vUYvdN0mhYEhQk/t2kx/E45YrDmZSNEGwY/C3jnLAAs\nlUiWUR+oJ4DRfxLlZOduaQKBgQDBAh5BSYDKRNkEMFCbu/+9NduUCsE65iwGTCA+\nJIZoBu+udnjsmTMnoE0T6HokL2qEKBe1hJenMcan5TdRo8QfFKrne03kqtYLLeMH\nH37MPOxW67xb7cErzoDlXzdIEPeDXCQ3o5GtvKb7wDIKrgcv+WDKpZYtMahRE5ix\nLPs2YwKBgBm23DD5SU7fLy/oyAKCBotQ2PX9H/gmyRgj36lxo+VZZrboXV06P7cC\nB8NSefW6F4CQkII7t+R+cnJxZ17bT6xGffNYHwc6YENqnxSut1DWQWMXyxi0D69n\nZYo7REo+hdsO30diYSc3P9snTXr2PpXiJm4VFnCWEiwG3iiYKy1v\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-controller-manager-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-controller-manager-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-controller-manager.pem\n    client-key: /etc/kubernetes/ssl/kube-controller-manager-key.pem",
+        "name": "kube-controller-manager",
+        "commonName": "system:kube-controller-manager",
+        "ouName": "",
+        "envName": "KUBE_CONTROLLER_MANAGER",
+        "path": "/etc/kubernetes/ssl/kube-controller-manager.pem",
+        "keyEnvName": "KUBE_CONTROLLER_MANAGER_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-controller-manager-key.pem",
+        "configEnvName": "KUBECFG_KUBE_CONTROLLER_MANAGER",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-controller-manager.yaml"
+      },
+      "kube-etcd-192-168-125-10": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDmDCCAoCgAwIBAgIIL7sjU4VGnG8wDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NTFaMBQxEjAQ\nBgNVBAMTCWt1YmUtZXRjZDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB\nAL5X6QdBHL1In56givI1Mr1a6RsvJWHFXGMB7VK6Ki1SQJiRl+XF/AMAFvEDWpl+\n+RD/aIz+tklqj9+3xVJWE3R1d53Iz/YAg7tqZFUuIRZTtyU5w6vmTNFa4JLNeaR4\nkv3rmX+iDGhHdxx7nMEL7sN+Y/RfAbR+EwawQI+YcNuVxdguNFhCfXnnd/wFf9Rf\neFZOW72H5+bz6dS1I+EJC68qw0lYPxCUrPXs9fRHlhDx8lm3PeDHw5lylarcyf+O\nh8tdmmjL/jwf9SYpC4jlvdVi4oVP9BM+r/nPqVxiDHw8IH0gJKU9T3pAhuGjwXr+\nvwQlcR68+OTQrV5SokIpzyUCAwEAAaOB7zCB7DAOBgNVHQ8BAf8EBAMCBaAwHQYD\nVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMBMB8GA1UdIwQYMBaAFF+ICAdkAelF\nyYwE7VfnDN1On52ZMIGZBgNVHREEgZEwgY6CEXN3YWdnZXItbm9kZS0wMS1tggls\nb2NhbGhvc3SCCmt1YmVybmV0ZXOCEmt1YmVybmV0ZXMuZGVmYXVsdIIWa3ViZXJu\nZXRlcy5kZWZhdWx0LnN2Y4Ika3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVy\nLmxvY2FshwTAqH0KhwR/AAABhwQKKwABMA0GCSqGSIb3DQEBCwUAA4IBAQBryzvJ\nPmhlXtQTg0Tzm0qx9Dl7OSXxZUCTmqpr7awIeZPQIBsVenG/+Bi1kfA5rP9UlAOM\nFl5hnuJ2m0DDMXFO+74xqjZudbDZV4VFqEjPGC0b0mQYC3TFKHEUuIK5zQGLi8MF\nv1DEZiY2Ngvq1aoKYn97bFOHNR6Wl5XlI5h1zkdjEIM70o5m0NB9jV5dbMe6cmwp\nwVaQNl7oyddMqY5MPEvFyioX2tin9fuliigLziICtroQoV7hV2VzOf8f4uqJ1FON\n/BFRILyniSAMv1FNXWkC0h3yVGX6vWtUCYNW5Gp4muRQmv/9TdGcER99yj/kYEK6\nu0DAOll8G9tR5qeQ\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAvlfpB0EcvUifnqCK8jUyvVrpGy8lYcVcYwHtUroqLVJAmJGX\n5cX8AwAW8QNamX75EP9ojP62SWqP37fFUlYTdHV3ncjP9gCDu2pkVS4hFlO3JTnD\nq+ZM0Vrgks15pHiS/euZf6IMaEd3HHucwQvuw35j9F8BtH4TBrBAj5hw25XF2C40\nWEJ9eed3/AV/1F94Vk5bvYfn5vPp1LUj4QkLryrDSVg/EJSs9ez19EeWEPHyWbc9\n4MfDmXKVqtzJ/46Hy12aaMv+PB/1JikLiOW91WLihU/0Ez6v+c+pXGIMfDwgfSAk\npT1PekCG4aPBev6/BCVxHrz45NCtXlKiQinPJQIDAQABAoIBAH1VwbnnJBd3hLOd\nHyER6pFJFYmy57iTjpwbHryEnVUufh54cD76uVD4dCLLhJLiSvroU13UMw/wvUAg\n8CuhRjo/Rz58hoOEHzn/eoWkVGExSr2WZcQBZ7/LSWkhJ+InCxNsWazzdZwMwt/c\nfYGYa+YKiaLWFHdXNQwIbtqfFGFiAFy3b3Wsu2tjRIvhJ8pOwgiqJ6+qale52xfI\nhFefh3u0XZcoV5gtDWa09gDMF9Ba39dyQ2j0cKDxaH6xrF53I3DIGPGIynrsP1qh\nRtAXY161V2L/COEiq2vGTV/EviOJ6N/2kmkXIisTrNMzTCC7Jh1Y1bK4ODhkIm/F\nrpc5Q1kCgYEAzPxG2Fd4tCQLyxWBWKCbYfCM6ufh5TtCN0AnoZyd3E5aLPJYpd/M\nXziIGsco0B/jxIboAB8LKgKWP1ruMn6mX74U2VTDYhJ0soLrSvSJY/nVuL0ymtIL\n/h6UpWyEEPNdC0Ipcu5dUngurhdsV8LaRaTGMpA78nOnnHWXofBg91sCgYEA7bbH\n7efrTBHGjpd9GIFbQDkk3/tspUXJ9KHLvMIissgqzxo0iIST1F4YpXeXz6HbGem4\nH8elaEi+pMiIkxzkZV4273VuRtXIYs8Wr5HSD8+QZtKNijryt9hlhN4wN0JA81uk\nSAD4q7wwVtI2X3TT4rDN4uf5fdez+36H4AHRm38CgYA8hpUIljNexXHyAiSSHcIj\nlhqV1egefnPbyoapMoxuG3iG4vwH5l/7Eb8mYP4NDg173vWr636pZeAlTt0cbccE\naCTR0zRpxddNSljdZf0XVxKjHMJPcov1+eOcQMFyG9myVFPWyskla7Uk1Ge6Nh+r\nBq87CNmaiknIafRe7ZJEFwKBgQCzRPTh5dT9OSqUvooIwQUgGfhFMkdtHISBiMMt\nRvsD+RDPvuN/UPxrW8safmZun5GsqSXCUb3cN4AOpWzaBR/5kmO7ksPnh7HnUmW5\nYi8Y3V/5KzCy3mHNY9SrrySNh9mTrbjm1FS0rueFkmKO+nwQqWWbiXYOAW4qa/Hs\nbXK14QKBgB99AMe16k3sj0gqJe5CciKsUxcF1IvZ9zSoOmGguRD639aptGzEVADf\nPplcZXbYB/XAzFVU+ltK3XCchVTG8jN0RJf6UKvSJrJ1nl4MKZ5ukNjB8qEfRiFF\n/FPezNb5uusgW50oggf84dp0Ler0cj7VTTS9YIzd7FGalEyIIKck\n-----END RSA PRIVATE KEY-----\n",
+        "config": "",
+        "name": "kube-etcd-192-168-125-10",
+        "commonName": "system:kube-etcd-192-168-125-10",
+        "ouName": "",
+        "envName": "KUBE_ETCD_192_168_125_10",
+        "path": "/etc/kubernetes/ssl/kube-etcd-192-168-125-10.pem",
+        "keyEnvName": "KUBE_ETCD_192_168_125_10_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-etcd-192-168-125-10-key.pem",
+        "configEnvName": "",
+        "configPath": ""
+      },
+      "kube-node": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDCTCCAfGgAwIBAgIIB0kTXe4qRWEwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDlaMC0xFTAT\nBgNVBAoTDHN5c3RlbTpub2RlczEUMBIGA1UEAxMLc3lzdGVtOm5vZGUwggEiMA0G\nCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDIZxQZdja532+9BxvkSDDku/d5Wo2S\nrpRE5FIfhs8tjgqom+8e3w8PelJqhMf/nM5SD41hwBevg58YljJU4KS/csSwa/CY\nVpQNkAXaXO4gWZYGS9S3HPeGTgPiDGtKpc5Fvq6JIjPsjWVIXlRTGs64lybQvaB4\n04lpKnIwFdDqRtzBfdSNgolarFGT5szsmPY2Xf03833xKKh4G44Q9PEFhyKbS+9u\nBV09TPjD35KvsaRHZkjpHNz+ab0Vl7FhuWVSiKZ4wjRMPQniIgTCO8nxDmJ8SM8a\njh6eOA6Xotnjh1rRVKSFtJMfFzN1n3RAFgSbOEuNLqzgLca5wQi1n5+NAgMBAAGj\nSDBGMA4GA1UdDwEB/wQEAwIFoDATBgNVHSUEDDAKBggrBgEFBQcDAjAfBgNVHSME\nGDAWgBRfiAgHZAHpRcmMBO1X5wzdTp+dmTANBgkqhkiG9w0BAQsFAAOCAQEAY9VY\n71cf1rrIKKnwdSV12s19jw23oQW8iRWFV9FddFw9YFxgv+TuWiYRgqTpLuX/ohfQ\nlYg/U9CcvHGr4y9HrtCuMdIE953JBPeKrDb7DuUVrGqlhRc2Kl0KxTu+nRXUmVPR\nRbdEheLOqFAwoEcwOHgFad+BblBwwfZJ1e/Cf0Q/KUj97Pc5IUY8QMOqlZrILxWE\nikov/Sl6F8ka/o/M0VdvOSPceCp2KcSV4rOmjlisxUOqqhacO1tEZYuqiywkNXMG\n+ZHZlfWivvwQK9Glw4OLDZVwCMeR1eqsKrYgxosp4L/usLsGNYcZFDG0U1Na/aed\nunbFsbxjTxKqg7MoEw==\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAyGcUGXY2ud9vvQcb5Egw5Lv3eVqNkq6URORSH4bPLY4KqJvv\nHt8PD3pSaoTH/5zOUg+NYcAXr4OfGJYyVOCkv3LEsGvwmFaUDZAF2lzuIFmWBkvU\ntxz3hk4D4gxrSqXORb6uiSIz7I1lSF5UUxrOuJcm0L2geNOJaSpyMBXQ6kbcwX3U\njYKJWqxRk+bM7Jj2Nl39N/N98SioeBuOEPTxBYcim0vvbgVdPUz4w9+Sr7GkR2ZI\n6Rzc/mm9FZexYbllUoimeMI0TD0J4iIEwjvJ8Q5ifEjPGo4enjgOl6LZ44da0VSk\nhbSTHxczdZ90QBYEmzhLjS6s4C3GucEItZ+fjQIDAQABAoIBABBlbp2OsHeQsmGy\n3TNWPLnaLys8n2yq3/KrA5UUwIqnnnOhHnVWJrNLfMa+Sma9e5v3LcgboVR43mFy\nmHedUZ1gVHtiuXKdUsuxRulQxSLccYveVG8O7amNZH/wKC8ZVcEbEsihhcIK54h+\nP0P1Y4hyxXg6q5B3Ljzufh01C7y/HkbMyfKG5pgePhtWI9WoENbGu04kcjPWDjlE\nMkdzL5jS/YXu2l4oE3uTLZ0mV9wzOhdfwk3qp1rHo73rHnAbF65X0gEuK62u6fFg\nqmYEyTf98FpN2Ej84iZPeOCDaKSECNzIJMSTL1XTCOeuNwUMs+6XscEWlcZBh99O\n6eEQ1QECgYEAzzhlBvIhydMeSyz4s3bYe9ihrtqCgX4lNdANa8W0lQVcHIkeQ64Q\nvtMZ6j3M5dS5o7SOOVC7AhEPQmW/tiM+Bv2vbDXTSt+x+92EZDULwRk63peyXbY/\nBZWkp4Mr4xWukpWdpNz2p0i6rgrYibKBCK2qqe2hzqjGpL5jOtLzauECgYEA95PW\nBbC5+YlssHvs5c+0hLvn8I4mxsWxU49mSjlrwYCqSn2ttEuhqHUmG/jBLUJUOoFg\nht+qRNlZZ2tvHrTobK5wXdSKzPnV1ref1YOVGI+tr50/51+reYN8PPiRpSqgqmcE\nji/DLWN5IeLAGm1SGLP+GSKjK7Yln2lUY8z2li0CgYAL22g8e4JfcAsdthcM/dHp\nVD38KViqXDN43szFy+xHUqUwpM/sg3tF0AJ9msespv1wVpaExQ/OUHeVDwlnPKEB\n+WYeRP4wHJislsJKkZZ4mB78OaXlItZ8VVG0nBbYyZbRoGoC0vnyHIFCEDDPwD0N\n6BIJ4yUNFC85ogM/jG6NQQKBgQDle3/3eE96MNqxX70/a16NZktgW7MvrhFnPdV3\n2W+7RhMSxxnas/wdVLFFXjdZR1Ehhci+W9XMyZaoWRn/4XpLOwnmv1sFElMXGs+p\nrrTltlAtJtoUEka0dJ8VOOZvrWqNaL39OeJ1UO337eFY3ZoqUbSnAcczfjuzXoOd\nml+65QKBgQC+BgOeZX88dyZF1rrHsi3x8G/l4CtgbPAcEWs5ITic2Mt7tLyPJIQb\n7pL1GA/oK+KNWIV7NroPpAQmhY7mVQ4KnQPRPZ2jvAe9kFEz7E1ay1d92idRklBC\ndlpjSs5+/2lGOe+LjD2k4USCUErG6AfrE7P7MtxwhOwE/ghpGev3Bw==\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-node-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-node-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-node.pem\n    client-key: /etc/kubernetes/ssl/kube-node-key.pem",
+        "name": "kube-node",
+        "commonName": "system:node",
+        "ouName": "system:nodes",
+        "envName": "KUBE_NODE",
+        "path": "/etc/kubernetes/ssl/kube-node.pem",
+        "keyEnvName": "KUBE_NODE_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-node-key.pem",
+        "configEnvName": "KUBECFG_KUBE_NODE",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-node.yaml"
+      },
+      "kube-proxy": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIC+DCCAeCgAwIBAgIIVZzm7ULA0tYwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDlaMBwxGjAY\nBgNVBAMTEXN5c3RlbTprdWJlLXByb3h5MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\nMIIBCgKCAQEAyGcUGXY2ud9vvQcb5Egw5Lv3eVqNkq6URORSH4bPLY4KqJvvHt8P\nD3pSaoTH/5zOUg+NYcAXr4OfGJYyVOCkv3LEsGvwmFaUDZAF2lzuIFmWBkvUtxz3\nhk4D4gxrSqXORb6uiSIz7I1lSF5UUxrOuJcm0L2geNOJaSpyMBXQ6kbcwX3UjYKJ\nWqxRk+bM7Jj2Nl39N/N98SioeBuOEPTxBYcim0vvbgVdPUz4w9+Sr7GkR2ZI6Rzc\n/mm9FZexYbllUoimeMI0TD0J4iIEwjvJ8Q5ifEjPGo4enjgOl6LZ44da0VSkhbST\nHxczdZ90QBYEmzhLjS6s4C3GucEItZ+fjQIDAQABo0gwRjAOBgNVHQ8BAf8EBAMC\nBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwHwYDVR0jBBgwFoAUX4gIB2QB6UXJjATt\nV+cM3U6fnZkwDQYJKoZIhvcNAQELBQADggEBAHbAmJ/gHrl8AIkCqdXMI0JyZIqR\nAVCL+gk8hAXNLEVJLoJT0HYP7H6wcp5wBf3i7MHy4IiXidZOuAFNWcsJmXPpkwIX\nZuoy11DOU/toj+B5DiRiak5xAhhmILmmSYUszLCCb7pvkiafNWf1gM03Oc110SLW\nOF97A1EEY+5Z40YBwNUTzPEWKrHgaoVuQSTlTqOkVFmHl0bWpGHEi8tsCrWTnC4d\neBHozlHT2KcKcHJY1v0FtjABb80rJwTgcet9CvRCA+kxtC36emJoPeTaZPpDyL7N\nlx8MxHBxMLZOZSCxoZuILX5uNoU2RybVyaAkCSRnOT6Ffsm/8Grea5Oz/nc=\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAyGcUGXY2ud9vvQcb5Egw5Lv3eVqNkq6URORSH4bPLY4KqJvv\nHt8PD3pSaoTH/5zOUg+NYcAXr4OfGJYyVOCkv3LEsGvwmFaUDZAF2lzuIFmWBkvU\ntxz3hk4D4gxrSqXORb6uiSIz7I1lSF5UUxrOuJcm0L2geNOJaSpyMBXQ6kbcwX3U\njYKJWqxRk+bM7Jj2Nl39N/N98SioeBuOEPTxBYcim0vvbgVdPUz4w9+Sr7GkR2ZI\n6Rzc/mm9FZexYbllUoimeMI0TD0J4iIEwjvJ8Q5ifEjPGo4enjgOl6LZ44da0VSk\nhbSTHxczdZ90QBYEmzhLjS6s4C3GucEItZ+fjQIDAQABAoIBABBlbp2OsHeQsmGy\n3TNWPLnaLys8n2yq3/KrA5UUwIqnnnOhHnVWJrNLfMa+Sma9e5v3LcgboVR43mFy\nmHedUZ1gVHtiuXKdUsuxRulQxSLccYveVG8O7amNZH/wKC8ZVcEbEsihhcIK54h+\nP0P1Y4hyxXg6q5B3Ljzufh01C7y/HkbMyfKG5pgePhtWI9WoENbGu04kcjPWDjlE\nMkdzL5jS/YXu2l4oE3uTLZ0mV9wzOhdfwk3qp1rHo73rHnAbF65X0gEuK62u6fFg\nqmYEyTf98FpN2Ej84iZPeOCDaKSECNzIJMSTL1XTCOeuNwUMs+6XscEWlcZBh99O\n6eEQ1QECgYEAzzhlBvIhydMeSyz4s3bYe9ihrtqCgX4lNdANa8W0lQVcHIkeQ64Q\nvtMZ6j3M5dS5o7SOOVC7AhEPQmW/tiM+Bv2vbDXTSt+x+92EZDULwRk63peyXbY/\nBZWkp4Mr4xWukpWdpNz2p0i6rgrYibKBCK2qqe2hzqjGpL5jOtLzauECgYEA95PW\nBbC5+YlssHvs5c+0hLvn8I4mxsWxU49mSjlrwYCqSn2ttEuhqHUmG/jBLUJUOoFg\nht+qRNlZZ2tvHrTobK5wXdSKzPnV1ref1YOVGI+tr50/51+reYN8PPiRpSqgqmcE\nji/DLWN5IeLAGm1SGLP+GSKjK7Yln2lUY8z2li0CgYAL22g8e4JfcAsdthcM/dHp\nVD38KViqXDN43szFy+xHUqUwpM/sg3tF0AJ9msespv1wVpaExQ/OUHeVDwlnPKEB\n+WYeRP4wHJislsJKkZZ4mB78OaXlItZ8VVG0nBbYyZbRoGoC0vnyHIFCEDDPwD0N\n6BIJ4yUNFC85ogM/jG6NQQKBgQDle3/3eE96MNqxX70/a16NZktgW7MvrhFnPdV3\n2W+7RhMSxxnas/wdVLFFXjdZR1Ehhci+W9XMyZaoWRn/4XpLOwnmv1sFElMXGs+p\nrrTltlAtJtoUEka0dJ8VOOZvrWqNaL39OeJ1UO337eFY3ZoqUbSnAcczfjuzXoOd\nml+65QKBgQC+BgOeZX88dyZF1rrHsi3x8G/l4CtgbPAcEWs5ITic2Mt7tLyPJIQb\n7pL1GA/oK+KNWIV7NroPpAQmhY7mVQ4KnQPRPZ2jvAe9kFEz7E1ay1d92idRklBC\ndlpjSs5+/2lGOe+LjD2k4USCUErG6AfrE7P7MtxwhOwE/ghpGev3Bw==\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-proxy-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-proxy-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-proxy.pem\n    client-key: /etc/kubernetes/ssl/kube-proxy-key.pem",
+        "name": "kube-proxy",
+        "commonName": "system:kube-proxy",
+        "ouName": "",
+        "envName": "KUBE_PROXY",
+        "path": "/etc/kubernetes/ssl/kube-proxy.pem",
+        "keyEnvName": "KUBE_PROXY_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-proxy-key.pem",
+        "configEnvName": "KUBECFG_KUBE_PROXY",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-proxy.yaml"
+      },
+      "kube-scheduler": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIC/DCCAeSgAwIBAgIIVxdc64QPXhMwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDlaMCAxHjAc\nBgNVBAMTFXN5c3RlbTprdWJlLXNjaGVkdWxlcjCCASIwDQYJKoZIhvcNAQEBBQAD\nggEPADCCAQoCggEBALA+c57+j9TOvxCpx+mEeLKRHjJ5fZFWMirLOjyvKk0+gxTd\nqpWQa3QNtKHcVjuKEnH6xL+TG+fnvgXfOMr022SlFFeik2dEU17c8d9hg1Q8qasu\nLYQEg9uKhD19q9nc5B3EvhHX8bTnfASdGHvKbqjAmjWjjj/pefDVKOoQxObE9CmW\n2rxoI3a6VTvn+iA502ZRUvaMBoiX9Qu64Yuk2aRDndHWfJKWNXR1whJIrhsDhQk1\nI9ktO1fk7CJoNssc4E/45oC0RvSFfBuXqO6t3mnx2MtdGSqbED+JU5XGv4v7Yk0a\noi4JA9b0MwgTZ9cGtK0CuDcY9pNzE/xIPqtVbqkCAwEAAaNIMEYwDgYDVR0PAQH/\nBAQDAgWgMBMGA1UdJQQMMAoGCCsGAQUFBwMCMB8GA1UdIwQYMBaAFF+ICAdkAelF\nyYwE7VfnDN1On52ZMA0GCSqGSIb3DQEBCwUAA4IBAQCpGmqna2Mz0J6EPzYbIEKQ\noHQzM5ZPxfp/Of3Wgdxb3cQmhSOE/Fd1OllFiEVLHv8l75Psg/dCEv3H+AtgLcze\nzwB2K2ar2vdQyGWTYe7dvldHIidKdAWE18bSZTBfT6vTdXLgRoyYM3SEohLwsYdS\nECBHC9so4Zn48OYDHNAnqRb/EKr847TQqs1KodKjIr8fh14d5z1sBvHjJoa1ZzxL\n+oOmESllOhh6lo7Bg5Z0oI69YXxNAtQv5KIydLCsQOv0vNU5frULlv3pP0/CFxPj\n9jma9a4krAL2wTt7iWe1KuN4hUpuIu1y1P6+zAZKPwPICOnqTXS1jwNikygsUh/1\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEpQIBAAKCAQEAsD5znv6P1M6/EKnH6YR4spEeMnl9kVYyKss6PK8qTT6DFN2q\nlZBrdA20odxWO4oScfrEv5Mb5+e+Bd84yvTbZKUUV6KTZ0RTXtzx32GDVDypqy4t\nhASD24qEPX2r2dzkHcS+EdfxtOd8BJ0Ye8puqMCaNaOOP+l58NUo6hDE5sT0KZba\nvGgjdrpVO+f6IDnTZlFS9owGiJf1C7rhi6TZpEOd0dZ8kpY1dHXCEkiuGwOFCTUj\n2S07V+TsImg2yxzgT/jmgLRG9IV8G5eo7q3eafHYy10ZKpsQP4lTlca/i/tiTRqi\nLgkD1vQzCBNn1wa0rQK4Nxj2k3MT/Eg+q1VuqQIDAQABAoIBACpIYV7UvdcVXtt1\nkCOjB333uOHtKcXzgwenSCqE78YmaDZaU/Gb+1uVai+m9/1Cy9gSjJ9VgM1rWLh5\n7Fss0XHc9PttYqXUy5entFOeRm6wOxh5dKwGlUfXfJBwFQmoqAXITL1lLHT1UFif\nA9+3GkNcKeMSgS8uKXYw/abiLQsb8V3zFl+n/fLU0H0oNb5qYpmE5tQdDB8NrxOl\nkPL5rnaCoSrudjexbv8Jvv9KsETlJMBGvS76oVnPeN97n9D7c4lVXbCErRczNX+/\nTf7gfvCBzSPxrwUhfUkIwYd9mxSFkc64SiV12C9VnrCoj2yE8CK9iBa4XGT0H2RU\nQGQqgAECgYEA3i0UVxmcWC2cxRsZIUT2LwGzQgaFIL3goMgnZNflI8BZGYqDeCxf\nCnL3jbbzawgXtVFe9opq/Zl6hbEANscVo7z8/iuAYDYBXytn2EwXhRivPAg4FPpg\nPGt/huKltvjQ//THHeWnq54VQa9OP4ijcbA621taA+ktTV94JaCv3qkCgYEAyxM/\niqQskFDFljfRtt20VCx8Uw7d6Y0kJ7Yb0maxV77O5EBL6nWwYBfmqyHpd4IizRLY\nJ+gawqlyi9fcKplpADiB14gkjcxd+DDUO8yq/0+nC3NdwmFLisunBkjjN9r5b3rT\nchVrCcHBfQpvFw/5MNrKIPHychT96xOcfSLDEAECgYEA2MI8XPnkmfbuQzM74kSI\ntrW+8QSxb48wj0yXeoBT0vx/MTb9KwqHMweVU9KRS/QaRVD9CCVlWsQZUEOuxMKY\n7yWb4lIIrlUiI3qSlukt7TF3DWerZ3Qa3fe29J89M/Uu2vkyJo3/dqUFcg8ZlUy2\nwV1BHu/SM4yUIS+qZXOPAfkCgYEAl2I+8QRX8DE2SjhMTozRfBo5h9VCWnOL60qX\nTO6e73FfW8oOjba0B75ph1NdbmiFtuiAWKdvI4QbzuHYz6zTGIYHTPvBfC9IMdd8\nryNwqajgNuoGj/vly47rcQTu1VmYrqEadSZAR+K3cZZQoBmZQvEm0w5qFN9PNmnF\nM4excAECgYEAjmWAOPwbWPihynjHdNgJb2+NFijMOmRsVJ7PjOVFeWvNAPdCMqEE\n/mAuFN5xLznB0XLYvmyEQt+l4+0MvEaBMXpxYTLOGw58LvfAyDJHCqzBa2n2ri24\nAwDYdrEhIVLMlCFQxuQARrYLwVIQfln2y/WkTvPP0ZltZ+yEkvuay9M=\n-----END RSA PRIVATE KEY-----\n",
+        "config": "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    api-version: v1\n    certificate-authority: /etc/kubernetes/ssl/kube-ca.pem\n    server: \"https://127.0.0.1:6443\"\n  name: \"local\"\ncontexts:\n- context:\n    cluster: \"local\"\n    user: \"kube-scheduler-local\"\n  name: \"local\"\ncurrent-context: \"local\"\nusers:\n- name: \"kube-scheduler-local\"\n  user:\n    client-certificate: /etc/kubernetes/ssl/kube-scheduler.pem\n    client-key: /etc/kubernetes/ssl/kube-scheduler-key.pem",
+        "name": "kube-scheduler",
+        "commonName": "system:kube-scheduler",
+        "ouName": "",
+        "envName": "KUBE_SCHEDULER",
+        "path": "/etc/kubernetes/ssl/kube-scheduler.pem",
+        "keyEnvName": "KUBE_SCHEDULER_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-scheduler-key.pem",
+        "configEnvName": "KUBECFG_KUBE_SCHEDULER",
+        "configPath": "/etc/kubernetes/ssl/kubecfg-kube-scheduler.yaml"
+      },
+      "kube-service-account-token": {
+        "certificatePEM": "-----BEGIN CERTIFICATE-----\nMIIDnTCCAoWgAwIBAgIIV2L0UBiPIdcwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UE\nAxMHa3ViZS1jYTAeFw0yMjA1MDUxMTE0NDdaFw0zMjA1MDIxMTE0NDhaMBkxFzAV\nBgNVBAMTDmt1YmUtYXBpc2VydmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEA2fvyym/4g5BC9mvIUtQ+25PxDVMyrZnGmDZwuTI8OU2zRqL2FS/alKAl\nFJNdkQ9ZSmxEac/h/drEYWZfLzUBUlzi6u0iO+GhQpVPjQRuh3VYikCGuPCYGipF\n5LXAMnaWf/VLbXnqHIfNUpGNuvXe4QULKMUJiY4Yr9apP/HVkmRRvRxZxpXLPGVf\nYhgbi9aijIqBA7QZWjntm0YRE6zM7HsPXbXvClo+yBr4g3VSxMzt6z4flBpu1YZp\nnyJZoJBxQrXRZFmn7DvSjD+pBlh5yXi7y1A/Nb8AyiZE2S1BWRGuKxiq46nwPjCM\nd4sHLvvRVEEQhb/tud8LAA9unoyZ4QIDAQABo4HvMIHsMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwHwYDVR0jBBgwFoAUX4gI\nB2QB6UXJjATtV+cM3U6fnZkwgZkGA1UdEQSBkTCBjoIRc3dhZ2dlci1ub2RlLTAx\nLW2CCWxvY2FsaG9zdIIKa3ViZXJuZXRlc4ISa3ViZXJuZXRlcy5kZWZhdWx0ghZr\ndWJlcm5ldGVzLmRlZmF1bHQuc3ZjgiRrdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNs\ndXN0ZXIubG9jYWyHBMCofQqHBH8AAAGHBAorAAEwDQYJKoZIhvcNAQELBQADggEB\nAIbz39J/GTZ34oNWSMIvxntVFL90zbB7uDI9cZQvlzjY/ujMJKksIooAKX05P52i\nuzmUtZplFqGvN7/5eF/fhTMA/Ov2h2Ig7cPejujPIo89w1GsYGaAEa7EEXH6bxD1\nIDCy2l5BHOzOm42ARI+bwU5qt7vh2pVqWU9fgesodI720Ex9ZppUqjxwJ13J2edH\n9gmjG2B0G7FyfSjM/tEJkwppdMPJ86IRXhiROYCN7FV37rpMLIKpEBPXgj5m7U8U\nAtDDAlxk1NKwCA77VCLLafqCERxeK7tjvn+j9dnvDS5tdsVBKbVk11iPdmdfNNby\nx9Bd0BOqXYYfNIqmHfM2zGg=\n-----END CERTIFICATE-----\n",
+        "keyPEM": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA2fvyym/4g5BC9mvIUtQ+25PxDVMyrZnGmDZwuTI8OU2zRqL2\nFS/alKAlFJNdkQ9ZSmxEac/h/drEYWZfLzUBUlzi6u0iO+GhQpVPjQRuh3VYikCG\nuPCYGipF5LXAMnaWf/VLbXnqHIfNUpGNuvXe4QULKMUJiY4Yr9apP/HVkmRRvRxZ\nxpXLPGVfYhgbi9aijIqBA7QZWjntm0YRE6zM7HsPXbXvClo+yBr4g3VSxMzt6z4f\nlBpu1YZpnyJZoJBxQrXRZFmn7DvSjD+pBlh5yXi7y1A/Nb8AyiZE2S1BWRGuKxiq\n46nwPjCMd4sHLvvRVEEQhb/tud8LAA9unoyZ4QIDAQABAoIBADJBIJ9FIzEJoDZ5\ncMyPvBIZUFh3Ftbo/dz3qBM6HqJDZJJjXYJS7vyW0xWkR8z6keZTgY43a+1/cwjV\ndhpHCQ/49COfGeZeRTQ5ggaLwAOgrRHqgGTAqwBVQJnSwQWhS18iqQoLMkrzkAV6\nIwe4SXLtG76Bdops5Qoc3hYs5cUCyNjT6oq0ghloNo8hKS4Q6ELet4kmzvoEbRnf\n9Z41B6GmIS6IAdPjLVs/kUcRJBMNeR1ibRW/13PTjpNJRHphIAgYy+xHUHAUp+yg\nW9AFtn5AWPkTzAC+1tXixLovy1hixqs4ZqPaOvXkCDYa/BrjB/yS4BYwt+nsGvW+\npPZd7tUCgYEA8HJB1/lmTMYbqCJx/OjOvXQBAFj2lMCCnLhhE9mgIzxb0AL2gJfp\nsbe9LduKdh8UoZU6V1EXKGVSAMcPueZjPl4d6DiuWh5XNxiGBZBww3Yu2lx18st4\nLBckEoQu3EOlEDDlkYagwZCOLvFC3VFMTsGwgiX83m2RxW5vf1sNJB8CgYEA6BW4\n/IeuqJoinFYjQmryPEqFXIuo9pl9Lj+kdbWf7AKs0EuY2EuN2/Z6WXqwIhh8d7sX\nPhE3iuVV1RUBIBBKVbDzz/C8SUG3rEFY4imDxTx8O6Zyyf3S4FgYouwwZzcsfB/L\n0EgYiU6mG636L4+og7bk2yTnRC9YUikSpbp+gf8CgYEAu7Akj4cBgMpfilYg7k94\nGdC0e2X2TNUc32LZfFozM24JKQ03B9gNNol7ZZFqupu2Sg8ndEM7NXApm6vHLdCW\nBXgIFl4wUu4+HCbLbwp5y0m0dwUXmMeU7a2+namKvqsa7NGOUZNqZs4E/sWa8RFl\n5FAzDNTEV4fl8twqspoLXvcCgYB21piwhnGC19odH2ZSnhyHjskXCFRuYU3eHqyB\nsYy/9uayieMr7hQnq+AebVo/OzaQwHY4S+ya7K+0ulqnJnBJzKAru+NNx57bT2LJ\n++QDXONoT+S7VYNjaPjEhBiM4Y2fyVA9yIz30hPwXHedXvw05bPuGslo+q1I9Msd\nnY8l1QKBgCsLe48ySloqc9e5nTN2kf37rCsFh6Iq4kv9bxg8Y7/8wXoH567WSKA5\nGtQe4O56EOeiczM9MVKen5WKxauRGYbZRwJGp/chKA6QvJMqvoRH0L++jUBPKDsn\nAeklpwot4vavM2G6OHa+MD/0+1n5wCJDWbGEtPrQ7g9ZazcSjaGo\n-----END RSA PRIVATE KEY-----\n",
+        "config": "",
+        "name": "kube-service-account-token",
+        "commonName": "kube-service-account-token",
+        "ouName": "",
+        "envName": "KUBE_SERVICE_ACCOUNT_TOKEN",
+        "path": "/etc/kubernetes/ssl/kube-service-account-token.pem",
+        "keyEnvName": "KUBE_SERVICE_ACCOUNT_TOKEN_KEY",
+        "keyPath": "/etc/kubernetes/ssl/kube-service-account-token-key.pem",
+        "configEnvName": "",
+        "configPath": ""
+      }
+    }
+  }
+}

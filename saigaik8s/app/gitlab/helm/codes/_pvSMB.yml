@@ -1,0 +1,204 @@
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: pv-gitlab-postgres
+# spec:
+#   capacity:
+#     storage: 10Gi
+#   volumeMode: Filesystem
+#   accessModes:
+#     - ReadWriteOnce
+#   persistentVolumeReclaimPolicy: Retain
+#   claimRef:
+#     namespace: gitlab-helm
+#     name: data-gitlab-helm-postgresql-0
+#   storageClassName: smb-nas-gitlab
+#   mountOptions:
+#     - dir_mode=0750
+#     - file_mode=0750
+#     - uid=1001
+#     - gid=1001
+#     - vers=2.0
+#   csi:
+#     driver: smb.csi.k8s.io
+#     readOnly: false
+#     volumeHandle: gitlab-postgres  # make sure it's a unique id in the cluster
+#     volumeAttributes:
+#       source: "//192.168.166.222/s90_SoftLib/Saigaik8s/gitlab"
+#       subDir: "postgres"
+#     nodeStageSecretRef:
+#       namespace: default
+#       name: "secret-nas-ryu"
+  # nodeAffinity:
+  #   required:
+  #     nodeSelectorTerms:
+  #       - matchExpressions:
+  #           - key: kubernetes.io/hostname
+  #             operator: In
+  #             values:
+  #               - node1
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-gitlab-minio
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab-helm
+    name: gitlab-helm-minio
+  storageClassName: smb-nas-gitlab
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=999
+    - gid=999
+    - vers=2.0
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: false
+    volumeHandle: gitlab-minio  # make sure it's a unique id in the cluster
+    volumeAttributes:
+      source: "//192.168.166.222/s90_SoftLib/Saigaik8s/gitlab"
+      subDir: "minio"
+    nodeStageSecretRef:
+      namespace: default
+      name: "secret-nas-ryu"
+  # nodeAffinity:
+  #   required:
+  #     nodeSelectorTerms:
+  #       - matchExpressions:
+  #           - key: kubernetes.io/hostname
+  #             operator: In
+  #             values:
+  #               - node1
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-gitlab-prometheus
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab-helm
+    name: gitlab-helm-prometheus-server
+  storageClassName: smb-nas-gitlab
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=999
+    - gid=999
+    - vers=2.0
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: false
+    volumeHandle: gitlab-prometheus  # make sure it's a unique id in the cluster
+    volumeAttributes:
+      source: "//192.168.166.222/s90_SoftLib/Saigaik8s/gitlab"
+      subDir: "prometheus"
+    nodeStageSecretRef:
+      namespace: default
+      name: "secret-nas-ryu"
+  # nodeAffinity:
+  #   required:
+  #     nodeSelectorTerms:
+  #       - matchExpressions:
+  #           - key: kubernetes.io/hostname
+  #             operator: In
+  #             values:
+  #               - node1
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-gitlab-redis
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab-helm
+    name: redis-data-gitlab-helm-redis-master-0
+  storageClassName: smb-nas-gitlab
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=999
+    - gid=999
+    - vers=2.0
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: false
+    volumeHandle: gitlab-redis  # make sure it's a unique id in the cluster
+    volumeAttributes:
+      source: "//192.168.166.222/s90_SoftLib/Saigaik8s/gitlab"
+      subDir: "redis"
+    nodeStageSecretRef:
+      namespace: default
+      name: "secret-nas-ryu"
+  # nodeAffinity:
+  #   required:
+  #     nodeSelectorTerms:
+  #       - matchExpressions:
+  #           - key: kubernetes.io/hostname
+  #             operator: In
+  #             values:
+  #               - node1
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-gitlab-gitaly
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    namespace: gitlab-helm
+    name: repo-data-gitlab-helm-gitaly-0
+  storageClassName: smb-nas-gitlab
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=999
+    - gid=999
+    - vers=2.0
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: false
+    volumeHandle: gitlab-gitaly  # make sure it's a unique id in the cluster
+    volumeAttributes:
+      source: "//192.168.166.222/s90_SoftLib/Saigaik8s/gitlab"
+      subDir: "gitaly"
+    nodeStageSecretRef:
+      namespace: default
+      name: "secret-nas-ryu"
+  # nodeAffinity:
+  #   required:
+  #     nodeSelectorTerms:
+  #       - matchExpressions:
+  #           - key: kubernetes.io/hostname
+  #             operator: In
+  #             values:
+  #               - node1

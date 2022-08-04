@@ -1,0 +1,18 @@
+# 永続化ボリューム要求
+apiVersion: v1
+kind: PersistentVolumeClaim
+# ボリューム要求のメタデータ
+metadata:
+  # annotations:
+  #   volume.beta.kubernetes.io/storage-class: smb-ryu-storage
+  name: pvc-only
+# ボリューム要求の仕様
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  ## 紐づくpvがなければ宣言しても無意味
+  # volumeName: swagger-datas
+  storageClassName: smb-ryu-storage

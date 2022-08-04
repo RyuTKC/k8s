@@ -1,0 +1,96 @@
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: k8s-m01-sdb
+  labels:
+    osd: 'true'
+spec:
+  volumeMode: Block
+  capacity:
+    storage: 931.5Gi
+  local:
+    path: /dev/sdb
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - k8s-m01
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: k8s-w01-sdb
+  labels:
+    osd: 'true'
+spec:
+  volumeMode: Block
+  capacity:
+    storage: 931.5Gi
+  local:
+    path: /dev/sdb
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - k8s-w01
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: k8s-w02-sdb
+  labels:
+    osd: 'true'
+spec:
+  volumeMode: Block
+  capacity:
+    storage: 931.5Gi
+  local:
+    path: /dev/sdb
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - k8s-w02
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: k8s-w03-sdb
+  labels:
+    osd: 'true'
+spec:
+  volumeMode: Block
+  capacity:
+    storage: 931.5Gi
+  local:
+    path: /dev/sdb
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - k8s-w03

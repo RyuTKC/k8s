@@ -1,0 +1,290 @@
+operatorNamespace: rook-ceph
+
+# kubeVersion:
+
+# configOverride:
+
+toolbox:
+  enabled: true
+  # tolerations:
+  # affinity:
+  # resoures:
+
+monitoring:
+  enabled: false
+  createPrometheusRules: false
+
+# 重要！
+cephClusterSpec:
+  cephVersion:
+    # see the "Cluster Settings" section below for more details on which image of ceph to run
+    image: quay.io/ceph/ceph:v17.2.1
+  dataDirHostPath: /var/lib/rook
+  dashboard:
+    enabled: true
+    port: 8443
+    ssl: true
+  mon:
+    count: 3
+    allowMultiplePerNode: false
+  mgr:
+    count: 2
+  crashCollector:
+    disable: false
+
+  monitoring:
+    enabled: false
+  network:
+    encryption:
+      enabled: false
+    compression:
+      enabled: false
+
+  cleanupPolicy:
+    confirmation: ""
+    sanitizeDisks:
+      method: quick
+      dataSource: zero
+      iteration: 1
+    allowUnistallWithVolumes: false
+
+  removeOSDsIfOutAndSafeToRemove: false
+  priorityClassNames:
+    mon: system-node-critical
+    osd: system-node-critical
+    mgr: system-cluster-critical
+
+  disruptionManagement:
+    managePodBudgets: true
+    osdMaintenanceTImeout: 30
+    pgHealthCheckTimeout: 0
+    manageMachineDisruptionBudgets: false
+    machineDisruptionBudgetNamespace: openshift-machine-api
+
+  healthCheck:
+    daemonHealth:
+      mon:
+        disabled: false
+        interval: 45s
+      osd:
+        disabled: false
+        interval: 60s
+      status:
+        disabled: false
+        interval: 60s
+    livenessProbe:
+      mon:
+        disabled: false
+      mgr:
+        disabled: false
+      osd:
+        disabled: false
+    startupProbe:
+      mon:
+        disabled: false
+      mgr:
+        disabled: false
+      osd:
+        disabled: false
+
+  resources:
+    mgr:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+    mon:
+      limits:
+        cpu: "400m"
+        memory: "2Gi"
+      requests:
+        cpu: "400m"
+        memory: "1Gi"
+    osd:
+      limits:
+        cpu: "400m"
+        memory: "4Gi"
+      requests:
+        cpu: "400m"
+        memory: "4Gi"
+    prepareosd:
+      limits:
+        cpu: "200m"
+        memory: "400Mi"
+      requests:
+        cpu: "200m"
+        memory: "50Mi"
+    mgr-sidecar:
+      limits:
+        cpu: "80m"
+        memory: "100Mi"
+      requests:
+        cpu: "80m"
+        memory: "40Mi"
+    crashcollector:
+      limits:
+        cpu: "80m"
+        memory: "60Mi"
+      requests:
+        cpu: "80m"
+        memory: "60Mi"
+    logcollector:
+      limits:
+        cpu: "80m"
+        memory: "1Gi"
+      requests:
+        cpu: "80m"
+        memory: "100Mi"
+    cleanup:
+      limits:
+        cpu: "200m"
+        memory: "1Gi"
+      requests:
+        cpu: "200m"
+        memory: "100Mi"
+  storage:
+    storageClassDeviceSets:
+      - name: ceph-osd-pvc-set
+        count: 4
+        portable: true
+        volumeClaimTemplates:
+          - metadata:
+              name: ceph-osd-set
+            spec:
+              selector:
+                matchLabels:
+                  osd: "true"
+              resources:
+                requests:
+                  storage: 931.5Gi
+              volumeMode: Block
+              accessModes:
+                - ReadWriteOnce
+    useAllNodes: false
+    useAllDevices: false
+    deviceFilter:
+    config:
+      # metadataDevice:
+      # databaseSizeMB: "1024" # this value can be removed for environments with normal sized disks (100 GB or larger)
+    # nodes:
+    #   - name: "k8s-m01"
+    #     devices:
+    #       - name: "sdb"
+    #         config:
+    #   - name: "k8s-w01"
+    #     devices:
+    #       - name: "sdb"
+    #         config:
+    #   - name: "k8s-w02"
+    #     devices:
+    #       - name: "sdb"
+    #         config:
+    #   - name: "k8s-w03"
+    #     devices:
+    #       - name: "sdb"
+    #         config:
+
+ingress:
+  dashboard: {}
+
+cephFileSystems:
+  - name: ceph-fs
+    storageClass:
+      enabled: false
+    spec:
+      dataPools:
+        - name: data0
+          erasureCoded:
+            codingChunks: 0
+            dataChunks: 0
+          failureDomain: host
+          mirroring: {}
+          quotas: {}
+          replicated:
+            size: 3
+          statusCheck:
+            mirror: {}
+      metadataPool:
+        erasureCoded:
+          codingChunks: 0
+          dataChunks: 0
+        mirroring: {}
+        quotas: {}
+        replicated:
+          size: 3
+        statusCheck:
+          mirror: {}
+      metadataServer:
+        activeCount: 1
+        activeStandby: true
+        placement: {}
+        priorityClassName: system-cluster-critical
+        resources:
+          limits:
+            cpu: "500m"
+            memory: 1024Mi
+          requests:
+            cpu: "500m"
+            memory: 1024Mi
+
+cephBlockPools:
+  - name: ceph-block
+    storageClass:
+      enabled: false
+    spec:
+      failureDomain: host
+      replicated:
+        size: 3
+      # deviceClass: hdd
+
+cephObjectStores:
+  - name: ceph-object
+    storageClass:
+      enabled: false
+    spec:
+      metadataPool:
+        failureDomain: host
+        replicated:
+          size: 3
+      dataPool:
+        failureDomain: host
+        # replicated:
+        #   size: 2
+        erasureCoded:
+          dataChunks: 2
+          codingChunks: 1
+      preservePoolsOnDelete: true
+      gateway:
+        type: s3
+        # sslCertificateRef:
+        # caBundleRef:
+        port: 80
+        # securePort: 443
+        instances: 1
+        # A key/value list of annotations
+        annotations:
+        #  key: value
+        placement:
+        #  nodeAffinity:
+        #    requiredDuringSchedulingIgnoredDuringExecution:
+        #      nodeSelectorTerms:
+        #      - matchExpressions:
+        #        - key: role
+        #          operator: In
+        #          values:
+        #          - rgw-node
+        #  tolerations:
+        #  - key: rgw-node
+        #    operator: Exists
+        #  podAffinity:
+        #  podAntiAffinity:
+        #  topologySpreadConstraints:
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "1024Mi"
+          requests:
+            cpu: "500m"
+            memory: "1024Mi"

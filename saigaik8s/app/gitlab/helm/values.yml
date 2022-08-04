@@ -1,0 +1,145 @@
+global:
+  edition: ce
+  hosts:
+    # domain: gitlab-helm.com 
+    https: false
+    gitlab:
+      name: bcastech-gitlab.is.fujimic.com
+      https: false
+    registry:
+      name: bcastech-registry.is.fujimic.com
+      https: false
+    minio:
+      name: bcastech-minio.is.fujimic.com
+      # https: false
+    kas:
+      name: bcastech-kas.is.fujimic.com
+      https: false
+  rails:
+    bootsnap:
+      enabled: false
+  ingress:
+    class: nginx
+    configureCertmanager: false
+  psql:
+    host: gitlab-postgres.z-postgres.svc.cluster.local
+    username: gitlab_root
+    sslMode: disable
+    database: gitlab_db
+    password:
+      useSecret: true
+      secret: gitlab-root.gitlab-postgres.credentials.postgresql.acid.zalan.do
+      key: password
+  minio:
+    enabled: false
+  registry:
+    bucket: gitlab-registry-bucket-7e163aa1-8de7-41f0-a0c7-01c597b90e44
+  appConfig:
+    lfs:
+      bucket: gitlab-lfs-bucket-20a5e514-9058-42a8-818c-dcc82e28c1de
+      connection:
+        secret: gitlab-lfs-bucket
+        key: connection
+    artifacts:
+      bucket: gitlab-artifacts-bucket-e12d1244-f7bf-44a0-a227-5dbb28d58e5d
+      connection:
+        secret: gitlab-artifacts-bucket
+        key: connection
+    uploads:
+      bucket: gitlab-uploads-bucket-2a142d5c-2135-4f7f-bb14-0ab1fa58979f
+      connection:
+        secret: gitlab-uploads-bucket
+        key: connection
+    packages:
+      bucket: gitlab-packages-bucket-1c10f92b-cdb0-4e6b-871e-7cbb45693a20
+      connection:
+        secret: gitlab-packages-bucket
+        key: connection
+    backups:
+      bucket: gitlab-backups-bucket
+registry:
+  hpa:
+    minReplicas: 1
+    maxReplicas: 1
+  storage:
+    secret: gitlab-registry-bucket
+    key: connection
+postgresql:
+  install: false
+  # volumePermissions:
+  #   enabled: true
+  # image.tag: 13.6.0
+certmanager:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+certmanager-issuer:
+  email: ryu.ide@fujimic.com
+gitlab-runner:
+  install: true
+  gitlabUrl: http://gitlab-helm-webservice-default.gitlab-helm.svc.cluster.local:8181
+nginx-ingress:
+  enabled: false
+  controller:
+    replicaCount: 1
+    minAvailable: 0
+    resources:
+      requests:
+        cpu: 50m
+        memory: 100Mi
+  defaultBackend:
+    replicaCount: 1
+    minAvailable: 0
+    resources:
+      requests:
+        cpu: 5m
+        memory: 5Mi
+redis:
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 64Mi
+minio:
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 0.1
+gitlab:
+  toolbox:
+    backups:
+      objectStorage:
+        config:
+          secret: gitlab-backups-bucket
+          key: connection
+  unicorn:
+    minReplicas: 1
+    maxReplicas: 1
+  sidekiq:
+    minReplicas: 1
+    maxReplicas: 1
+    resources:
+      limits:
+        memory: 1.5G
+      requests:
+        cpu: 0.1
+        memory: 625M
+  gitlab-shell:
+    minReplicas: 1
+    maxReplicas: 1
+  webservice:
+    minReplicas: 1
+    maxReplicas: 1
+    resources:
+      limits:
+        memory: 1.5G
+      requests:
+        cpu: 0.1
+        memory: 10M
+    workhorse:
+      resources:
+        limits:
+          memory: 50M
+        requests:
+          cpu: 0.1
+          memory: 10M

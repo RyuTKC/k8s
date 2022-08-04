@@ -1,0 +1,110 @@
+USER-SUPPLIED VALUES:
+certmanager:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+certmanager-issuer:
+  email: ryu.ide@fujimic.com
+gitlab:
+  gitlab-shell:
+    maxReplicas: 1
+    minReplicas: 1
+  sidekiq:
+    maxReplicas: 1
+    minReplicas: 1
+    resources:
+      limits:
+        memory: 1.5G
+      requests:
+        cpu: 0.1
+        memory: 625M
+  unicorn:
+    maxReplicas: 1
+    minReplicas: 1
+  webservice:
+    maxReplicas: 1
+    minReplicas: 1
+    resources:
+      limits:
+        memory: 1.5G
+      requests:
+        cpu: 0.1
+        memory: 10M
+    workhorse:
+      resources:
+        limits:
+          memory: 100M
+        requests:
+          cpu: 0.1
+          memory: 10M
+gitlab-runner:
+  install: false
+global:
+  edition: ce
+  hosts:
+    domain: bcastech-k8s-ingress-svc.is.fujimic.com
+    externalIP: 192.168.125.201
+    gitlab:
+      name: bcastech-k8s-ingress-svc.is.fujimic.com
+      https: false
+    registry:
+      name: ""
+      https: false
+    minio:
+      name: ""
+      https: false
+    kas:
+      name: ""
+      https: false
+  ingress:
+    configureCertmanager: false
+  psql:
+    database: gitlab_db
+    host: gitlab-postgres.z-postgres.svc.cluster.local
+    password:
+      key: password
+      secret: gitlab-root.gitlab-postgres.credentials.postgresql.acid.zalan.do
+      useSecret: true
+    username: gitlab_root
+  rails:
+    bootsnap:
+      enabled: false
+minio:
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 64Mi
+nginx-ingress:
+  controller:
+    minAvailable: 0
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 100Mi
+  defaultBackend:
+    minAvailable: 0
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: 5m
+        memory: 5Mi
+postgresql:
+  install: false
+redis:
+  resources:
+    requests:
+      cpu: 0.1
+      memory: 64Mi
+kas:
+  ingress:
+    enabled: false
+registry:
+  ingress:
+    enabled: false
+  hpa:
+    maxReplicas: 1
+    minReplicas: 1

@@ -1,0 +1,101 @@
+#cloud-config
+hostname: swagger-master
+ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO4n8HV5GxST1W+tcb+c7IHatViAfb7fGPUBwOzivYg0 test-kvm@test-kvm-server
+
+rancher:
+  console: ubuntu
+  environment:
+    HTTP_PROXY: http://proxy1.is.fujimic.com:8080
+    HTTPS_PROXY: http://proxy1.is.fujimic.com:8080
+    NO_PROXY: localhost, 127.0.0.1, 192.168.122.255, 192.168.166.255 
+  network:
+    http_proxy: http://proxy1.is.fujimic.com:8080
+    https_proxy: http://proxy1.is.fujimic.com:8080
+    no_proxy: localhost, 127.0.0.1, 192.168.122.255, 192.168.166.255
+    dns:
+      nameservers:
+        - 192.168.32.6
+        - 192.168.32.8
+        - infoserv11.jp.fujimic.com
+    interfaces:
+      eth0:
+        address: 192.168.122.10/24
+        gateway: 192.168.122.1
+        dhcp: false
+      eth1:
+        address: 192.168.125.10/24
+        dhcp: false
+    post_cmds:
+      - /var/lib/iptables/rules.sh post_cmds
+
+runcmd:
+  # 125セグメントへのルート追加
+  - ip route add 192.168.125.0/24 via 192.168.125.1 dev eth1
+  - "loadkmap < /usr/share/keymaps/i386/ch.bmap"
+
+write_files:
+  - container: ntp
+    path: /etc/ntp.conf
+    permissions: "0644"
+    owner: root
+    content: |
+      ntp.nict.jp iburst
+
+      # Allow only time queries, at a limited rate, sending KoD when in excess.
+      # Allow all local queries (IPv4, IPv6)
+      restrict default nomodify nopeer noquery limited kod
+      restrict 127.0.0.1
+      restrict [::1]
+  - container: network
+    owner: root:root
+    path: /var/lib/iptables/rules.sh
+    permissions: "0755"
+    content: |+
+      #!/bin/bash
+      set -ex
+      echo ui >> /var/log/net.log
+      # rancher-node-inboundチェインを作成
+      ## - tcpプロトコルでの受信ポート（destination port）80, 443へのパケットアクセスを許可（ACCEPTターゲットを付加）
+      iptables -N rancher-node-inbound
+      iptables -A rancher-node-inbound -m multiport -p tcp --dport 80,443 -j ACCEPT
+      # etcd-node-inboundチェインを作成
+      ## - tcpプロトコルでの受信ポート（destination port）2376,2379,2380,9099,10250へのパケットアクセスを許可（ACCEPTターゲットを付加）
+      ## - udpプロトコルでの受信ポート（destination port）8472へのパケットアクセスを許可（ACCEPTターゲットを付加）
+      iptables -N etcd-node-inbound
+      iptables -A etcd-node-inbound -m multiport -p tcp --dport 2376,2379,2380,9099,10250 -j ACCEPT
+      iptables -A etcd-node-inbound -p udp --dport 8472 -j ACCEPT
+      # controlplane-node-inboundチェインを作成
+      ## - tcpプロトコルでの受信ポート（destination port）80,443,2376,6443,9099,10250,10254,30000~32767へのパケットアクセスを許可（ACCEPTターゲットを付加）
+      ## - udpプロトコルでの受信ポート（destination port）30000~32767へのパケットアクセスを許可（ACCEPTターゲットを付加）
+      iptables -N controlplane-node-inbound
+      iptables -A controlplane-node-inbound -m multiport -p tcp --dport 80,443,2376,6443,9099,10250,10254,30000:32767 -j ACCEPT
+      iptables -A controlplane-node-inbound -m multiport -p udp --dport 8472,30000:32767 -j ACCEPT
+      # worker-node-inboundチェインを作成
+      ## - tcpプロトコルでの受信ポート（destination port）80,443,2376,9099,10250,10254,30000~32767へのパケットアクセスを許可（ACCEPTターゲットを付加）
+      ## - udpプロトコルでの受信ポート（destination port）30000~32767へのパケットアクセスを許可（ACCEPTターゲットを付加）
+      iptables -N worker-node-inbound
+      iptables -A worker-node-inbound -m multiport -p tcp --dport 80,443,2376,9099,10250,10254,30000:32767 -j ACCEPT
+      iptables -A worker-node-inbound -m multiport -p udp --dport 8472,30000:32767 -j ACCEPT
+      # worker-internalチェインを作成
+      ## - 複数ポートにおいて、10.0.0.0/8からのパケットアクセスを許可（ACCEPTターゲットを付加）
+      ## - 複数ポートにおいて、172.16.0.0/12からのパケットアクセスを許可（ACCEPTターゲットを付加）
+      ## - 複数ポートにおいて、192.168.0.0/16からのパケットアクセスを許可（ACCEPTターゲットを付加）
+      ## - 複数ポートにおいて、<Worker Node IP>からのパケットアクセスを許可（ACCEPTターゲットを付加）
+      ## - 複数ポートにおいて、<Worker Node IP>からのパケットアクセスを許可（ACCEPTターゲットを付加）
+      ## ...
+      # iptables -N worker-internal
+      # iptables -A worker-internal -m multiport --source 10.0.0.0/8 -j ACCEPT
+      # iptables -A worker-internal -m multiport --source 172.16.0.0/12 -j ACCEPT
+      # iptables -A worker-internal -m multiport --source 192.168.0.0/16 -j ACCEPT
+      # iptables -A worker-internal -m multiport --source <Worker Node IP> -j ACCEPT
+      # iptables -A worker-internal -m multiport --source <Worker Node IP> -j ACCEPT
+
+      # INPUTチェインの1に各チェインを追加
+      iptables -I INPUT 1 -j rancher-node-inbound
+      iptables -I INPUT 1 -j etcd-node-inbound
+      iptables -I INPUT 1 -j controlplane-node-inbound
+      iptables -I INPUT 1 -j worker-node-inbound
+      # iptables -I INPUT 1 -j worker-internal
+      iptables-save > /home/rancher/iptables.rule
+      iptables-restore < /home/rancher/iptables.rule

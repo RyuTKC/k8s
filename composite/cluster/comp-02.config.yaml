@@ -1,0 +1,7 @@
+server: https://192.168.125.15:9345
+token: K1087f8861a873f4db69091e3ab5551f02861e35e086a5d4d7ad344c88077044b61::server:6d531b5f8e8993097caae2e6e49e9fc0
+node-ip: 192.168.125.16
+disable:
+  - rke2-ingress-nginx
+tls-san:
+  - 192.168.125.15
